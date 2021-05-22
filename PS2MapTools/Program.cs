@@ -1,19 +1,31 @@
-﻿using ImageMagick;
+﻿using CliFx;
+using ImageMagick;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
-namespace PS2MapBuilder
+namespace PS2MapTools
 {
     public static class Program
+    {
+        public static async Task<int> Main() =>
+            await new CliApplicationBuilder()
+                .AddCommandsFromThisAssembly()
+                .Build()
+                .RunAsync()
+                .ConfigureAwait(false);
+    }
+
+    public class Test
     {
         private const string OPTIPNG_FILE_NAME = "optipng.exe";
 
         private static readonly Dictionary<string, Dictionary<string, List<Tile>>> _worldLodBuckets = new();
 
-        public static void Main(string[] args)
+        public void Main(string[] args)
         {
             bool noCompression = false;
             bool parallelCompression = true;

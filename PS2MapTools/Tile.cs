@@ -1,4 +1,4 @@
-﻿namespace PS2MapBuilder
+﻿namespace PS2MapTools
 {
     public struct Tile
     {
