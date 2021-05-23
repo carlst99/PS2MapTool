@@ -33,5 +33,10 @@
 
             return true;
         }
+
+        public override string ToString()
+        {
+            return $"{World}_Tile_{Y}_{X}_{LOD}";
+        }
     }
 }
