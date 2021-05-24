@@ -2,8 +2,11 @@
 using CliFx.Attributes;
 using CliFx.Exceptions;
 using CliFx.Infrastructure;
-using ImageMagick;
+using Pfim;
 using PS2MapTools.Validators;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using Spectre.Console;
 using System;
 using System.Collections.Generic;
@@ -19,6 +22,7 @@ namespace PS2MapTools.Commands
     public class StitchCommand : ICommand
     {
         private const string OPTIPNG_FILE_NAME = "optipng.exe";
+        private const int TILE_SIZE = 256;
 
         private readonly Dictionary<string, Dictionary<string, List<Tile>>> _worldLodBuckets = new();
         private readonly ParallelTaskRunner _taskRunner;
@@ -135,9 +139,6 @@ namespace PS2MapTools.Commands
 
         private void EnqueueStitchTasks(CancellationToken ct)
         {
-            // Each tile is 256x256 pixels, regardless of the LOD
-            MagickGeometry tileGeometry = new(256);
-
             foreach (Dictionary<string, List<Tile>> worldBucket in _worldLodBuckets.Values)
             {
                 foreach (List<Tile> lodBucket in worldBucket.Values)
@@ -149,29 +150,37 @@ namespace PS2MapTools.Commands
 
                         IEnumerable<Tile> orderedBucket = lodBucket.OrderByDescending((b) => b.X).ThenBy((b) => b.Y);
 
-                        using MagickImageCollection images = new();
+                        // Allocate for the complete stitched image
+                        int tilesPerSide = (int)Math.Sqrt(lodBucket.Count); // Square image, this will always be an integer
+                        int pixelsPerSide = tilesPerSide * TILE_SIZE; // Each tile is 256x256 pixels
+                        using Image<Rgba32> stitchedImage = new(pixelsPerSide, pixelsPerSide);
 
+                        int x = 0, y = 0;
                         foreach (Tile tile in orderedBucket)
                         {
-                            MagickImage image = new(tile.Path);
-                            image.Rotate(270);
-                            images.Add(image);
+                            Image tileImage = LoadDDSImage(tile.Path);
+                            tileImage.Mutate(o => o.Rotate(RotateMode.Rotate270));
+
+                            stitchedImage.Mutate(o => o.DrawImage(tileImage, new Point(x, y), 1f));
+                            tileImage.Dispose();
+
+                            x += TILE_SIZE;
+                            if (x == pixelsPerSide)
+                            {
+                                x = 0;
+                                y += TILE_SIZE;
+                            }
                         }
 
-                        using IMagickImage<float> mosaic = images.Montage(new MontageSettings
-                        {
-                            BorderWidth = 0,
-                            Geometry = tileGeometry
-                        });
-                        mosaic.Rotate(90);
-                        mosaic.Flip();
+                        stitchedImage.Mutate(o => o.RotateFlip(RotateMode.Rotate90, FlipMode.Vertical));
 
 #pragma warning disable CS8604 // Possible null reference argument.
                         string? outputDirectory = OutputPath ?? Path.GetDirectoryName(referenceTile.Path);
                         string outputFilePath = Path.Combine(outputDirectory, $"{referenceTile.World}_{referenceTile.LOD}.png");
 #pragma warning restore CS8604 // Possible null reference argument.
 
-                        mosaic.Write(outputFilePath, MagickFormat.Png);
+                        stitchedImage.SaveAsPng(outputFilePath);
+                        stitchedImage.Dispose();
                         _console.MarkupLine($"[lightgreen]Completed[/] stitching tiles for [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
 
                         if (!DisableCompression)
@@ -204,6 +213,7 @@ namespace PS2MapTools.Commands
                     if (process is null)
                         return;
 
+                    Task.Delay(500).Wait(); // Fixes issues with OptiPNG not starting fast enough on high LODs
                     process.WaitForExit();
                     _console.MarkupLine("[lightgreen]Completed[/] compressing [aqua]" + Path.GetFileName(filePath) + "[/]");
                 }
@@ -214,6 +224,28 @@ namespace PS2MapTools.Commands
             }, ct, TaskCreationOptions.LongRunning);
 
             _taskRunner.EnqueueTask(compressionTask);
+        }
+
+        private static Image<Bgra32> LoadDDSImage(string filePath)
+        {
+            using Pfim.IImage image = Pfim.Pfim.FromFile(filePath);
+            byte[] newData;
+
+            int tightStride = image.Width * image.BitsPerPixel / 8;
+            if (image.Stride != tightStride)
+            {
+                newData = new byte[image.Height * tightStride];
+                for (int i = 0; i < image.Height; i++)
+                {
+                    Buffer.BlockCopy(image.Data, i * image.Stride, newData, i * tightStride, tightStride);
+                }
+            }
+            else
+            {
+                newData = image.Data;
+            }
+
+            return Image.LoadPixelData<Bgra32>(newData, image.Width, image.Height);
         }
     }
 }
