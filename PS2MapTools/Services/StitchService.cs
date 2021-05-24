@@ -8,5 +8,6 @@ namespace PS2MapTools.Services
 {
     public class StitchService
     {
+        public const string PREFIX = "[purple]STITCH[/]";
     }
 }

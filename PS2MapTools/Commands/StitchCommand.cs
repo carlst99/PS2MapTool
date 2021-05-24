@@ -34,8 +34,8 @@ namespace PS2MapTools.Commands
         [CommandParameter(0, Description = "The path to the directory containing the LOD tiles. Each tile should be named in the format <World>_Tile_<Y>_<X>_LOD*.")]
         public string TilesSource { get; init; }
 
-        [CommandOption("output", 'o', Description = "The path to output the stitched map/s to.", IsRequired = false)]
-        public string? OutputPath { get; init; }
+        [CommandOption("output", 'o', Description = "The path to output the stitched map/s to.")]
+        public string OutputPath { get; private set; }
 
         [CommandOption("disable-compression", 'd', Description = "Prevents the stitched map/s from being compressed using OptiPNG. Saves a considerable amount of time at the expense of producing maps 40-50% larger in size.", IsRequired = false)]
         public bool DisableCompression { get; init; }
@@ -54,6 +54,7 @@ namespace PS2MapTools.Commands
         public StitchCommand()
         {
             TilesSource = string.Empty;
+            OutputPath = string.Empty;
             MaxParallelism = 4;
             _taskRunner = new ParallelTaskRunner();
             _console = AnsiConsole.Create(new AnsiConsoleSettings());
@@ -64,7 +65,7 @@ namespace PS2MapTools.Commands
             if (!Directory.Exists(TilesSource))
                 throw new CommandException("The provided tiles source directory does not exist.");
 
-            if (OutputPath is not null && !Directory.Exists(OutputPath))
+            if (!string.IsNullOrWhiteSpace(OutputPath) && !Directory.Exists(OutputPath))
             {
                 try
                 {
@@ -74,6 +75,10 @@ namespace PS2MapTools.Commands
                 {
                     throw new CommandException("The specified output directory does not exist and could not be created.", innerException: ex);
                 }
+            }
+            else
+            {
+                OutputPath = TilesSource;
             }
 
             _console = AnsiConsole.Create(new AnsiConsoleSettings
@@ -172,12 +177,11 @@ namespace PS2MapTools.Commands
                             }
                         }
 
-                        stitchedImage.Mutate(o => o.RotateFlip(RotateMode.Rotate90, FlipMode.Vertical));
+                        //stitchedImage.Mutate(o => o.RotateFlip(RotateMode.Rotate90, FlipMode.Vertical));
                         _console.MarkupLine($"[lightgreen]Completed[/] stitching tiles for [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
 
 #pragma warning disable CS8604 // Possible null reference argument.
-                        string? outputDirectory = OutputPath ?? Path.GetDirectoryName(referenceTile.Path);
-                        string outputFilePath = Path.Combine(outputDirectory, $"{referenceTile.World}_{referenceTile.LOD}.png");
+                        string outputFilePath = Path.Combine(OutputPath, $"{referenceTile.World}_{referenceTile.LOD}.png");
 #pragma warning restore CS8604 // Possible null reference argument.
 
                         _console.MarkupLine($"Saving [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
