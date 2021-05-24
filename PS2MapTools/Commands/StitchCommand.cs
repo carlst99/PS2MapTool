@@ -4,6 +4,7 @@ using CliFx.Exceptions;
 using CliFx.Infrastructure;
 using ImageMagick;
 using PS2MapTools.Validators;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,6 +22,10 @@ namespace PS2MapTools.Commands
 
         private readonly Dictionary<string, Dictionary<string, List<Tile>>> _worldLodBuckets = new();
         private readonly ParallelTaskRunner _taskRunner;
+
+        private IAnsiConsole _console;
+
+        #region Command Parameters/Options
 
         [CommandParameter(0, Description = "The path to the directory containing the LOD tiles. Each tile should be named in the format <World>_Tile_<Y>_<X>_LOD*.")]
         public string TilesSource { get; init; }
@@ -40,11 +45,14 @@ namespace PS2MapTools.Commands
         [CommandOption("lods", 'l', Description = "Limits map generation to the given LODs", Validators = new Type[] { typeof(LODNumberValidator) })]
         public IReadOnlyList<int>? LODs { get; init; }
 
+        #endregion
+
         public StitchCommand()
         {
             TilesSource = string.Empty;
             MaxParallelism = 4;
             _taskRunner = new ParallelTaskRunner();
+            _console = AnsiConsole.Create(new AnsiConsoleSettings());
         }
 
         public async ValueTask ExecuteAsync(IConsole console)
@@ -64,11 +72,16 @@ namespace PS2MapTools.Commands
                 }
             }
 
+            _console = AnsiConsole.Create(new AnsiConsoleSettings
+            {
+                Out = new AnsiConsoleOutput(console.Output)
+            });
+
             CancellationToken ct = console.RegisterCancellationHandler();
             _taskRunner.Start(ct, MaxParallelism);
 
-            GenerateWorldLodBuckets(console);
-            EnqueueStitchTasks(console);
+            GenerateWorldLodBuckets();
+            EnqueueStitchTasks();
 
             // Job done, wait for all tasks to complete.
             await _taskRunner.WaitForAll().ConfigureAwait(false);
@@ -78,9 +91,9 @@ namespace PS2MapTools.Commands
         /// <summary>
         /// Filters through all files in the source directory and sorts tiles into applicable <see cref="_worldLodBuckets"/>.
         /// </summary>
-        private void GenerateWorldLodBuckets(IConsole console)
+        private void GenerateWorldLodBuckets()
         {
-            console.Output.Write("Generating map buckets...");
+            _console.Write("Generating map buckets...");
             IEnumerable<string>? normalisedLods = LODs?.Select(l => "LOD" + l.ToString());
 
             foreach (string filePath in Directory.EnumerateFiles(TilesSource))
@@ -107,14 +120,15 @@ namespace PS2MapTools.Commands
                 _worldLodBuckets[tile.World][tile.LOD].Add(tile);
             }
 
-            console.Output.WriteLine("\t Done");
-            console.Output.WriteLine("Generating maps for:");
+            _console.MarkupLine("\t [lightgreen]Done[/]");
+            _console.WriteLine("Generating maps for:");
             foreach (string world in _worldLodBuckets.Keys)
-                console.Output.WriteLine("\t" + world + ": " + string.Join(',', _worldLodBuckets[world].Keys));
-            console.Output.WriteLine();
+                _console.MarkupLine($"\t[yellow]{world}[/]: [red]{ string.Join(',', _worldLodBuckets[world].Keys) }[/]");
+
+            _console.WriteLine();
         }
 
-        private void EnqueueStitchTasks(IConsole console)
+        private void EnqueueStitchTasks()
         {
             // Each tile is 256x256 pixels, regardless of the LOD
             MagickGeometry tileGeometry = new(256);
@@ -126,7 +140,8 @@ namespace PS2MapTools.Commands
                     Task stitchTask = new(() =>
                     {
                         Tile referenceTile = lodBucket[0];
-                        console.Output.WriteLine($"Stitching tiles for world {referenceTile.World} at LOD {referenceTile.LOD}...");
+                        //console.Output.WriteLine($"Stitching tiles for {referenceTile.World} at {referenceTile.LOD}...");
+                        _console.MarkupLine($"Stitching tiles for [yellow]{referenceTile.World}[/] at [red]{referenceTile.LOD}[/]...");
 
                         IEnumerable<Tile> orderedBucket = lodBucket.OrderByDescending((b) => b.X).ThenBy((b) => b.Y);
 
@@ -153,8 +168,8 @@ namespace PS2MapTools.Commands
 #pragma warning restore CS8604 // Possible null reference argument.
 
                         mosaic.Write(outputFilePath, MagickFormat.Png);
-                        console.Output.WriteLine($"Completed stitching tiles for {referenceTile.World} at {referenceTile.LOD}");
-                        console.Output.WriteLine("Wrote output file: " + outputFilePath);
+                        //console.Output.WriteLine($"Completed stitching tiles for {referenceTile.World} at {referenceTile.LOD}");
+                        _console.MarkupLine($"Completed stitching tiles for [yellow]{referenceTile.World}[/] at [red]{referenceTile.LOD}[/]...");
 
                         //if (!DisableCompression)
                         //    EnqueueCompression(outputFilePath);
