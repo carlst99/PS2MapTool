@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PS2MapTools
+namespace PS2MapTool
 {
     /// <summary>
     /// Runs multiple tasks in parallel, with support for a parallelism limit.

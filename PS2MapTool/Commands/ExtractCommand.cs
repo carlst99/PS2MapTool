@@ -3,7 +3,7 @@ using CliFx.Attributes;
 using CliFx.Infrastructure;
 using System.Threading.Tasks;
 
-namespace PS2MapTools.Commands
+namespace PS2MapTool.Commands
 {
     [Command("extract", Description = "Extracts LOD tiles from the game client assets.")]
     public class ExtractCommand : ICommand

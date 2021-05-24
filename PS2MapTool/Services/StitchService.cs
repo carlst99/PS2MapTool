@@ -1,4 +1,4 @@
-﻿using PS2MapTools.Models;
+﻿using PS2MapTool.Models;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -10,7 +10,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PS2MapTools.Services
+namespace PS2MapTool.Services
 {
     public class StitchService
     {

@@ -1,6 +1,6 @@
 ﻿using CliFx.Extensibility;
 
-namespace PS2MapTools.Validators
+namespace PS2MapTool.Validators
 {
     public class MaxParallelValidator : BindingValidator<int>
     {

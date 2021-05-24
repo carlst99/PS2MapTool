@@ -1,7 +1,7 @@
 ﻿using CliFx;
 using System.Threading.Tasks;
 
-namespace PS2MapTools
+namespace PS2MapTool
 {
     public static class Program
     {

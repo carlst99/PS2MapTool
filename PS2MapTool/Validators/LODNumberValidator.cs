@@ -1,7 +1,7 @@
 ﻿using CliFx.Extensibility;
 using System.Collections.Generic;
 
-namespace PS2MapTools.Validators
+namespace PS2MapTool.Validators
 {
     public class LODNumberValidator : BindingValidator<IEnumerable<int>>
     {
