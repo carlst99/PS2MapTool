@@ -25,7 +25,7 @@ namespace PS2MapTool.Services
         {
             if (!File.Exists(OPTIPNG_FILE_NAME))
             {
-                _console.MarkupLine($"{ PREFIX }{ Formatter.Error("Compression failed:") } OptiPNG cannot be found.");
+                _console.MarkupLine($"{ PREFIX }{ Formatter.Error("Compression failed:") } { OPTIPNG_FILE_NAME } cannot be found.");
                 return;
             }
 

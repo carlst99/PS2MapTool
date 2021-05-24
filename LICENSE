@@ -1,5 +1,3 @@
-=== 1. PS2MapTool ===
-
 MIT License
 
 Copyright (c) 2021 Carl Stephens
@@ -24,7 +22,7 @@ SOFTWARE.
 
 
 
-=== 2. Bundled OptiPNG <http://optipng.sourceforge.net> ===
+=== Bundled OptiPNG <http://optipng.sourceforge.net> ===
 
 Copyright (C) 2001-2017 Cosmin Truta and the Contributing Authors.
 For the purpose of copyright and licensing, the list of Contributing
