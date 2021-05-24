@@ -110,6 +110,7 @@ namespace PS2MapTools
                 }
             }, ct, TaskCreationOptions.LongRunning);
 
+            IsRunning = true;
             _taskRunner.Start();
         }
 

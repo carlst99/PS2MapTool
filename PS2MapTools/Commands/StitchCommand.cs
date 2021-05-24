@@ -5,7 +5,6 @@ using CliFx.Infrastructure;
 using ImageMagick;
 using PS2MapTools.Validators;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -21,10 +20,7 @@ namespace PS2MapTools.Commands
         private const string OPTIPNG_FILE_NAME = "optipng.exe";
 
         private readonly Dictionary<string, Dictionary<string, List<Tile>>> _worldLodBuckets = new();
-        private readonly ConcurrentQueue<Action<IConsole, CancellationToken>> _taskQueue;
-
-        private bool _noTasksToEnqueue;
-        private Task _taskRunner;
+        private readonly ParallelTaskRunner _taskRunner;
 
         [CommandParameter(0, Description = "The path to the directory containing the LOD tiles. Each tile should be named in the format <World>_Tile_<Y>_<X>_LOD*.")]
         public string TilesSource { get; init; }
@@ -48,11 +44,10 @@ namespace PS2MapTools.Commands
         {
             TilesSource = string.Empty;
             MaxParallelism = 4;
-            _taskQueue = new ConcurrentQueue<Action<IConsole, CancellationToken>>();
-            _taskRunner = new Task(() => throw new InvalidOperationException("This task runner has not been setup."));
+            _taskRunner = new ParallelTaskRunner();
         }
 
-        public ValueTask ExecuteAsync(IConsole console)
+        public async ValueTask ExecuteAsync(IConsole console)
         {
             if (!Directory.Exists(TilesSource))
                 throw new CommandException("The provided tiles source directory does not exist.");
@@ -70,55 +65,14 @@ namespace PS2MapTools.Commands
             }
 
             CancellationToken ct = console.RegisterCancellationHandler();
-            SetupTaskRunner(console, ct);
+            _taskRunner.Start(ct, MaxParallelism);
 
             GenerateWorldLodBuckets(console);
-            EnqueueStitchTasks();
+            EnqueueStitchTasks(console);
 
-            _noTasksToEnqueue = true;
             // Job done, wait for all tasks to complete.
-            _taskRunner.Wait();
-
-            return default;
-        }
-
-        /// <summary>
-        /// Initialises and starts the <see cref="_taskRunner"/>.
-        /// </summary>
-        /// <param name="console">The console instance for tasks to use.</param>
-        /// <param name="ct"></param>
-        private void SetupTaskRunner(IConsole console, CancellationToken ct)
-        {
-            // TODO: Refactor logic to new class
-
-            _taskRunner = new Task(() =>
-            {
-                List<Task> cachedTasks = new();
-
-                int taskCount = 0;
-                while ((!_noTasksToEnqueue || !_taskQueue.IsEmpty) && !ct.IsCancellationRequested)
-                {
-                    while (taskCount < MaxParallelism && _taskQueue.TryDequeue(out Action<IConsole, CancellationToken>? a))
-                    {
-                        Task t = new(() => a.Invoke(console, ct), TaskCreationOptions.LongRunning);
-                        t.ContinueWith((t) =>
-                        {
-                            cachedTasks.Remove(t);
-                            Interlocked.Decrement(ref taskCount);
-                        });
-                        cachedTasks.Add(t);
-                        t.Start();
-
-                        Interlocked.Increment(ref taskCount);
-                        // Cache tasks and wait on them completing before exiting
-                    }
-
-                    Task.Delay(100).Wait();
-                }
-
-                Task.WhenAll(cachedTasks).Wait();
-            }, TaskCreationOptions.LongRunning);
-            _taskRunner.Start();
+            await _taskRunner.WaitForAll().ConfigureAwait(false);
+            _taskRunner.Stop();
         }
 
         /// <summary>
@@ -160,7 +114,7 @@ namespace PS2MapTools.Commands
             console.Output.WriteLine();
         }
 
-        private void EnqueueStitchTasks()
+        private void EnqueueStitchTasks(IConsole console)
         {
             // Each tile is 256x256 pixels, regardless of the LOD
             MagickGeometry tileGeometry = new(256);
@@ -169,10 +123,10 @@ namespace PS2MapTools.Commands
             {
                 foreach (List<Tile> lodBucket in worldBucket.Values)
                 {
-                    _taskQueue.Enqueue((c, _) =>
+                    Task stitchTask = new(() =>
                     {
                         Tile referenceTile = lodBucket[0];
-                        c.Output.WriteLine($"Stitching tiles for world {referenceTile.World} at LOD {referenceTile.LOD}...");
+                        console.Output.WriteLine($"Stitching tiles for world {referenceTile.World} at LOD {referenceTile.LOD}...");
 
                         IEnumerable<Tile> orderedBucket = lodBucket.OrderByDescending((b) => b.X).ThenBy((b) => b.Y);
 
@@ -199,12 +153,14 @@ namespace PS2MapTools.Commands
 #pragma warning restore CS8604 // Possible null reference argument.
 
                         mosaic.Write(outputFilePath, MagickFormat.Png);
-                        c.Output.WriteLine($"Completed stitching tiles for world {referenceTile.World} at LOD {referenceTile.LOD}");
-                        c.Output.WriteLine("Wrote output file: " + outputFilePath);
+                        console.Output.WriteLine($"Completed stitching tiles for {referenceTile.World} at {referenceTile.LOD}");
+                        console.Output.WriteLine("Wrote output file: " + outputFilePath);
 
                         //if (!DisableCompression)
                         //    EnqueueCompression(outputFilePath);
-                    });
+                    }, TaskCreationOptions.LongRunning);
+
+                    _taskRunner.EnqueueTask(stitchTask);
                 }
             }
         }
