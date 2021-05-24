@@ -2,17 +2,15 @@
 using CliFx.Attributes;
 using CliFx.Exceptions;
 using CliFx.Infrastructure;
-using Pfim;
+using PS2MapTools.Models;
+using PS2MapTools.Services;
 using PS2MapTools.Validators;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,13 +19,11 @@ namespace PS2MapTools.Commands
     [Command("stitch", Description = "Stitches LOD tiles together to form a complete map. Maps will be created for all World/LOD combinations found in the source directory, unless otherwise specified.")]
     public class StitchCommand : ICommand
     {
-        private const string OPTIPNG_FILE_NAME = "optipng.exe";
-        private const int TILE_SIZE = 256;
+        private readonly Stopwatch _stopwatch;
 
-        private readonly Dictionary<string, Dictionary<string, List<Tile>>> _worldLodBuckets = new();
-        private readonly ParallelTaskRunner _taskRunner;
-
+        private ParallelTaskRunner _taskRunner;
         private IAnsiConsole _console;
+        private CancellationToken _ct;
 
         #region Command Parameters/Options
 
@@ -47,20 +43,44 @@ namespace PS2MapTools.Commands
         public IReadOnlyList<string>? Worlds { get; init; }
 
         [CommandOption("lods", 'l', Description = "Limits map generation to the given LODs", Validators = new Type[] { typeof(LODNumberValidator) })]
-        public IReadOnlyList<int>? LODs { get; init; }
+        public IReadOnlyList<int>? Lods { get; init; }
 
         #endregion
 
         public StitchCommand()
         {
+            _stopwatch = new Stopwatch();
+
             TilesSource = string.Empty;
             OutputPath = string.Empty;
             MaxParallelism = 4;
-            _taskRunner = new ParallelTaskRunner();
-            _console = AnsiConsole.Create(new AnsiConsoleSettings());
         }
 
         public async ValueTask ExecuteAsync(IConsole console)
+        {
+            Setup(console);
+
+            _stopwatch.Start();
+
+            WorldLodBucket? tileBucket = GetTileBuckets();
+            if (tileBucket is null)
+                return;
+
+            StitchService stitchService = new(_console, _taskRunner);
+            CompressionService compressionService = new(_console, _taskRunner);
+
+            stitchService.StitchTiles(tileBucket, OutputPath, _ct, (s) => compressionService.Compress(s, _ct));
+
+            // Job done, wait for all tasks to complete.
+            await _taskRunner.WaitForAll().ConfigureAwait(false);
+            _taskRunner.Stop();
+
+            _stopwatch.Stop();
+            _console.WriteLine();
+            _console.MarkupLine(Formatter.Success("Completed in " + _stopwatch.Elapsed.ToString(@"hh\h\ mm\m\ ss\s")));
+        }
+
+        private void Setup(IConsole console)
         {
             if (!Directory.Exists(TilesSource))
                 throw new CommandException("The provided tiles source directory does not exist.");
@@ -86,180 +106,31 @@ namespace PS2MapTools.Commands
                 Out = new AnsiConsoleOutput(console.Output)
             });
 
-            CancellationToken ct = console.RegisterCancellationHandler();
-            _taskRunner.Start(ct, MaxParallelism);
+            _ct = console.RegisterCancellationHandler();
 
-            GenerateWorldLodBuckets();
-            EnqueueStitchTasks(ct);
-
-            // Job done, wait for all tasks to complete.
-            await _taskRunner.WaitForAll().ConfigureAwait(false);
-            _taskRunner.Stop();
+            _taskRunner = new ParallelTaskRunner((e) => console.Error.WriteLine(e));
+            _taskRunner.Start(_ct, MaxParallelism);
         }
 
         /// <summary>
         /// Filters through all files in the source directory and sorts tiles into applicable <see cref="_worldLodBuckets"/>.
         /// </summary>
-        private void GenerateWorldLodBuckets()
+        private WorldLodBucket? GetTileBuckets()
         {
-            _console.Write("Generating map buckets...");
-            IEnumerable<string>? normalisedLods = LODs?.Select(l => "LOD" + l.ToString());
-
-            foreach (string filePath in Directory.EnumerateFiles(TilesSource))
-            {
-                if (!Tile.TryParse(filePath, out Tile tile))
-                    continue;
-
-                // Discard the tile if we shouldn't be generating maps for its world
-                if (Worlds is not null && !Worlds.Contains(tile.World))
-                    continue;
-
-                // Discard the tile if we shouldn't be generating maps for its LOD
-                if (normalisedLods is not null && !normalisedLods.Contains(tile.LOD))
-                    continue;
-
-                // Ensure that the world bucket exists
-                if (!_worldLodBuckets.ContainsKey(tile.World))
-                    _worldLodBuckets[tile.World] = new Dictionary<string, List<Tile>>();
-
-                // Ensure that the LOD bucket exists
-                if (!_worldLodBuckets[tile.World].ContainsKey(tile.LOD))
-                    _worldLodBuckets[tile.World][tile.LOD] = new List<Tile>();
-
-                _worldLodBuckets[tile.World][tile.LOD].Add(tile);
-            }
-
-            _console.MarkupLine("\t [lightgreen]Done[/]");
+            _console.Write("Generating tile buckets...");
+            WorldLodBucket bucket = StitchService.GenerateTileBuckets(TilesSource, Worlds, Lods);
+            _console.MarkupLine("\t " + Formatter.Success("Done"));
 
             _console.WriteLine("Maps will be generated for:");
-            foreach (string world in _worldLodBuckets.Keys)
-                _console.MarkupLine($"\t[yellow]{world}[/]: [fuchsia]{ string.Join(',', _worldLodBuckets[world].Keys) }[/]");
-
-#if RELEASE
-            _console.Confirm("Continue?");
-#endif
+            foreach (string world in bucket.GetWorlds())
+                _console.MarkupLine($"\t{ Formatter.World(world) }: { Formatter.Lod(string.Join(',', bucket.GetLods(world))) }");
 
             _console.WriteLine();
-        }
 
-        private void EnqueueStitchTasks(CancellationToken ct)
-        {
-            foreach (Dictionary<string, List<Tile>> worldBucket in _worldLodBuckets.Values)
-            {
-                foreach (List<Tile> lodBucket in worldBucket.Values)
-                {
-                    Task stitchTask = new(() =>
-                    {
-                        Tile referenceTile = lodBucket[0];
-                        _console.MarkupLine($"Stitching tiles for [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
-
-                        IEnumerable<Tile> orderedBucket = lodBucket.OrderByDescending((b) => b.X).ThenBy((b) => b.Y);
-
-                        // Allocate for the complete stitched image
-                        int tilesPerSide = (int)Math.Sqrt(lodBucket.Count); // Square image, this will always be an integer
-                        int pixelsPerSide = tilesPerSide * TILE_SIZE; // Each tile is 256x256 pixels
-                        using Image<Rgba32> stitchedImage = new(pixelsPerSide, pixelsPerSide);
-
-                        int x = 0, y = 0;
-                        foreach (Tile tile in orderedBucket)
-                        {
-                            Image tileImage = LoadDDSImage(tile.Path);
-                            tileImage.Mutate(o => o.Rotate(RotateMode.Rotate270));
-
-                            stitchedImage.Mutate(o => o.DrawImage(tileImage, new Point(x, y), 1f));
-                            tileImage.Dispose();
-
-                            x += TILE_SIZE;
-                            if (x == pixelsPerSide)
-                            {
-                                x = 0;
-                                y += TILE_SIZE;
-                            }
-                        }
-
-                        //stitchedImage.Mutate(o => o.RotateFlip(RotateMode.Rotate90, FlipMode.Vertical));
-                        _console.MarkupLine($"[lightgreen]Completed[/] stitching tiles for [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
-
-#pragma warning disable CS8604 // Possible null reference argument.
-                        string outputFilePath = Path.Combine(OutputPath, $"{referenceTile.World}_{referenceTile.LOD}.png");
-#pragma warning restore CS8604 // Possible null reference argument.
-
-                        _console.MarkupLine($"Saving [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
-                        stitchedImage.SaveAsPng(outputFilePath);
-                        stitchedImage.Dispose();
-                        _console.MarkupLine($"[lightgreen]Completed[/] saving [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
-
-                        if (!DisableCompression)
-                            EnqueueCompression(outputFilePath, ct);
-                    }, ct, TaskCreationOptions.LongRunning);
-
-                    _taskRunner.EnqueueTask(stitchTask);
-                }
-            }
-        }
-
-        private void EnqueueCompression(string filePath, CancellationToken ct)
-        {
-            if (!File.Exists(OPTIPNG_FILE_NAME))
-            {
-                _console.MarkupLine("[red]Compression failed:[/] OptiPNG cannot be found.");
-                return;
-            }
-
-            Task compressionTask = new(() =>
-            {
-                _console.MarkupLine("Beginning compression on [aqua]" + Path.GetFileName(filePath) + "[/]");
-                try
-                {
-                    Process? process = Process.Start(new ProcessStartInfo(OPTIPNG_FILE_NAME, filePath)
-                    {
-                        CreateNoWindow = true,
-                        RedirectStandardOutput = true
-                    });
-
-                    if (process is null)
-                        return;
-
-                    // Fixes issues with OptiPNG spawning a child process
-                    process.BeginOutputReadLine();
-                    bool canWait = false;
-                    process.OutputDataReceived += (_, __) => canWait = true;
-                    while (!canWait)
-                        Task.Delay(100).Wait();
-
-                    process.WaitForExit();
-                    process.Dispose();
-                    _console.MarkupLine("[lightgreen]Completed[/] compressing [aqua]" + Path.GetFileName(filePath) + "[/]");
-                }
-                catch (Exception ex)
-                {
-                    _console.MarkupLine("[red]Compression failed:[/] " + ex.ToString());
-                }
-            }, ct, TaskCreationOptions.LongRunning);
-
-            _taskRunner.EnqueueTask(compressionTask);
-        }
-
-        private static Image<Bgra32> LoadDDSImage(string filePath)
-        {
-            using Pfim.IImage image = Pfim.Pfim.FromFile(filePath);
-            byte[] newData;
-
-            int tightStride = image.Width * image.BitsPerPixel / 8;
-            if (image.Stride != tightStride)
-            {
-                newData = new byte[image.Height * tightStride];
-                for (int i = 0; i < image.Height; i++)
-                {
-                    Buffer.BlockCopy(image.Data, i * image.Stride, newData, i * tightStride, tightStride);
-                }
-            }
+            if (_console.Confirm("Continue?"))
+                return bucket;
             else
-            {
-                newData = image.Data;
-            }
-
-            return Image.LoadPixelData<Bgra32>(newData, image.Width, image.Height);
+                return null;
         }
     }
 }

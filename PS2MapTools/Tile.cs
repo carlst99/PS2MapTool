@@ -6,7 +6,7 @@
         public string World { get; private set; }
         public int X { get; private set; }
         public int Y { get; private set; }
-        public string LOD { get; private set; }
+        public string Lod { get; private set; }
 
         public static bool TryParse(string filePath, out Tile tile)
         {
@@ -29,14 +29,14 @@
             tile.World = nameComponents[0];
             tile.X = x;
             tile.Y = y;
-            tile.LOD = nameComponents[4];
+            tile.Lod = nameComponents[4];
 
             return true;
         }
 
         public override string ToString()
         {
-            return $"{World}_Tile_{Y}_{X}_{LOD}";
+            return $"{World}_Tile_{Y}_{X}_{Lod}";
         }
     }
 }

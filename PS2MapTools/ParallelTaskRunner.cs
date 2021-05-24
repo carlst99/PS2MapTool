@@ -18,6 +18,7 @@ namespace PS2MapTools
 
         protected readonly ConcurrentQueue<Task> _taskQueue;
         protected readonly List<Task> _runningTasks;
+        protected readonly Action<AggregateException>? _onTaskException;
 
         /// <summary>
         /// Gets the number of currently running tasks. Only update this using volatile operations, such as through the <see cref="Interlocked"/> class.
@@ -49,8 +50,10 @@ namespace PS2MapTools
         /// <summary>
         /// Initializes a new instance of the <see cref="ParallelTaskRunner"/> object.
         /// </summary>
-        public ParallelTaskRunner()
+        public ParallelTaskRunner(Action<AggregateException>? onTaskException = default)
         {
+            _onTaskException = onTaskException;
+
             _taskQueue = new ConcurrentQueue<Task>();
             _runningTasks = new List<Task>();
             _taskRunner = new Task(() => throw new InvalidOperationException("This task runner has not been setup."));
@@ -95,7 +98,10 @@ namespace PS2MapTools
                             Monitor.Exit(_runningTasks);
 
                             Interlocked.Decrement(ref _runningTaskCount);
-                        });
+
+                            if (t.Exception is not null && _onTaskException is not null)
+                                _onTaskException(t.Exception);
+                        }, ct);
 
                         Interlocked.Increment(ref _runningTaskCount);
 
