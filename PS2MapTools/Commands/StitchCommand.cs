@@ -81,7 +81,7 @@ namespace PS2MapTools.Commands
             _taskRunner.Start(ct, MaxParallelism);
 
             GenerateWorldLodBuckets();
-            EnqueueStitchTasks();
+            EnqueueStitchTasks(ct);
 
             // Job done, wait for all tasks to complete.
             await _taskRunner.WaitForAll().ConfigureAwait(false);
@@ -124,7 +124,7 @@ namespace PS2MapTools.Commands
 
             _console.WriteLine("Maps will be generated for:");
             foreach (string world in _worldLodBuckets.Keys)
-                _console.MarkupLine($"\t[yellow]{world}[/]: [red]{ string.Join(',', _worldLodBuckets[world].Keys) }[/]");
+                _console.MarkupLine($"\t[yellow]{world}[/]: [fuchsia]{ string.Join(',', _worldLodBuckets[world].Keys) }[/]");
 
 #if RELEASE
             _console.Confirm("Continue?");
@@ -133,7 +133,7 @@ namespace PS2MapTools.Commands
             _console.WriteLine();
         }
 
-        private void EnqueueStitchTasks()
+        private void EnqueueStitchTasks(CancellationToken ct)
         {
             // Each tile is 256x256 pixels, regardless of the LOD
             MagickGeometry tileGeometry = new(256);
@@ -145,7 +145,7 @@ namespace PS2MapTools.Commands
                     Task stitchTask = new(() =>
                     {
                         Tile referenceTile = lodBucket[0];
-                        _console.MarkupLine($"Stitching tiles for [yellow]{referenceTile.World}[/] at [red]{referenceTile.LOD}[/]...");
+                        _console.MarkupLine($"Stitching tiles for [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
 
                         IEnumerable<Tile> orderedBucket = lodBucket.OrderByDescending((b) => b.X).ThenBy((b) => b.Y);
 
@@ -172,42 +172,48 @@ namespace PS2MapTools.Commands
 #pragma warning restore CS8604 // Possible null reference argument.
 
                         mosaic.Write(outputFilePath, MagickFormat.Png);
-                        _console.MarkupLine($"[lightgreen]Completed[/] stitching tiles for [yellow]{referenceTile.World}[/] at [red]{referenceTile.LOD}[/]...");
+                        _console.MarkupLine($"[lightgreen]Completed[/] stitching tiles for [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
 
-                        //if (!DisableCompression)
-                        //    EnqueueCompression(outputFilePath);
-                    }, TaskCreationOptions.LongRunning);
+                        if (!DisableCompression)
+                            EnqueueCompression(outputFilePath, ct);
+                    }, ct, TaskCreationOptions.LongRunning);
 
                     _taskRunner.EnqueueTask(stitchTask);
                 }
             }
         }
 
-        private bool EnqueueCompression(string filePath)
+        private void EnqueueCompression(string filePath, CancellationToken ct)
         {
             if (!File.Exists(OPTIPNG_FILE_NAME))
-                return false;
-
-            Console.WriteLine("Beginning compression on " + filePath);
-            try
             {
-                Process? process = Process.Start(new ProcessStartInfo(OPTIPNG_FILE_NAME, filePath)
+                _console.MarkupLine("[red]Compression failed:[/] OptiPNG cannot be found.");
+                return;
+            }
+
+            Task compressionTask = new(() =>
+            {
+                _console.MarkupLine("Beginning compression on [aqua]" + Path.GetFileName(filePath) + "[/]");
+                try
                 {
-                    UseShellExecute = true
-                });
+                    Process? process = Process.Start(new ProcessStartInfo(OPTIPNG_FILE_NAME, filePath)
+                    {
+                        UseShellExecute = true
+                    });
 
-                if (process is null)
-                    return false;
+                    if (process is null)
+                        return;
 
-                process.Exited += (s, e) => Console.WriteLine("Completed compressing " + filePath);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Compression failed: " + ex.ToString());
-                return false;
-            }
+                    process.WaitForExit();
+                    _console.MarkupLine("[lightgreen]Completed[/] compressing [aqua]" + Path.GetFileName(filePath) + "[/]");
+                }
+                catch (Exception ex)
+                {
+                    _console.MarkupLine("[red]Compression failed:[/] " + ex.ToString());
+                }
+            }, ct, TaskCreationOptions.LongRunning);
 
-            return true;
+            _taskRunner.EnqueueTask(compressionTask);
         }
     }
 }
