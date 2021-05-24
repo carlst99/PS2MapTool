@@ -121,9 +121,14 @@ namespace PS2MapTools.Commands
             }
 
             _console.MarkupLine("\t [lightgreen]Done[/]");
-            _console.WriteLine("Generating maps for:");
+
+            _console.WriteLine("Maps will be generated for:");
             foreach (string world in _worldLodBuckets.Keys)
                 _console.MarkupLine($"\t[yellow]{world}[/]: [red]{ string.Join(',', _worldLodBuckets[world].Keys) }[/]");
+
+#if RELEASE
+            _console.Confirm("Continue?");
+#endif
 
             _console.WriteLine();
         }
@@ -140,7 +145,6 @@ namespace PS2MapTools.Commands
                     Task stitchTask = new(() =>
                     {
                         Tile referenceTile = lodBucket[0];
-                        //console.Output.WriteLine($"Stitching tiles for {referenceTile.World} at {referenceTile.LOD}...");
                         _console.MarkupLine($"Stitching tiles for [yellow]{referenceTile.World}[/] at [red]{referenceTile.LOD}[/]...");
 
                         IEnumerable<Tile> orderedBucket = lodBucket.OrderByDescending((b) => b.X).ThenBy((b) => b.Y);
@@ -168,8 +172,7 @@ namespace PS2MapTools.Commands
 #pragma warning restore CS8604 // Possible null reference argument.
 
                         mosaic.Write(outputFilePath, MagickFormat.Png);
-                        //console.Output.WriteLine($"Completed stitching tiles for {referenceTile.World} at {referenceTile.LOD}");
-                        _console.MarkupLine($"Completed stitching tiles for [yellow]{referenceTile.World}[/] at [red]{referenceTile.LOD}[/]...");
+                        _console.MarkupLine($"[lightgreen]Completed[/] stitching tiles for [yellow]{referenceTile.World}[/] at [red]{referenceTile.LOD}[/]...");
 
                         //if (!DisableCompression)
                         //    EnqueueCompression(outputFilePath);
