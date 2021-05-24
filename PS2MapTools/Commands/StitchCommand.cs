@@ -173,15 +173,17 @@ namespace PS2MapTools.Commands
                         }
 
                         stitchedImage.Mutate(o => o.RotateFlip(RotateMode.Rotate90, FlipMode.Vertical));
+                        _console.MarkupLine($"[lightgreen]Completed[/] stitching tiles for [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
 
 #pragma warning disable CS8604 // Possible null reference argument.
                         string? outputDirectory = OutputPath ?? Path.GetDirectoryName(referenceTile.Path);
                         string outputFilePath = Path.Combine(outputDirectory, $"{referenceTile.World}_{referenceTile.LOD}.png");
 #pragma warning restore CS8604 // Possible null reference argument.
 
+                        _console.MarkupLine($"Saving [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
                         stitchedImage.SaveAsPng(outputFilePath);
                         stitchedImage.Dispose();
-                        _console.MarkupLine($"[lightgreen]Completed[/] stitching tiles for [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
+                        _console.MarkupLine($"[lightgreen]Completed[/] saving [yellow]{referenceTile.World}[/] at [fuchsia]{referenceTile.LOD}[/]...");
 
                         if (!DisableCompression)
                             EnqueueCompression(outputFilePath, ct);
@@ -207,14 +209,22 @@ namespace PS2MapTools.Commands
                 {
                     Process? process = Process.Start(new ProcessStartInfo(OPTIPNG_FILE_NAME, filePath)
                     {
-                        UseShellExecute = true
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true
                     });
 
                     if (process is null)
                         return;
 
-                    Task.Delay(500).Wait(); // Fixes issues with OptiPNG not starting fast enough on high LODs
+                    // Fixes issues with OptiPNG spawning a child process
+                    process.BeginOutputReadLine();
+                    bool canWait = false;
+                    process.OutputDataReceived += (_, __) => canWait = true;
+                    while (!canWait)
+                        Task.Delay(100).Wait();
+
                     process.WaitForExit();
+                    process.Dispose();
                     _console.MarkupLine("[lightgreen]Completed[/] compressing [aqua]" + Path.GetFileName(filePath) + "[/]");
                 }
                 catch (Exception ex)
