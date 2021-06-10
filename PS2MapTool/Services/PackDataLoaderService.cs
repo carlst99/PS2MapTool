@@ -22,6 +22,7 @@ namespace PS2MapTool.Services
         public PackDataLoaderService(string packsPath)
         {
             _packsLocation = packsPath;
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
@@ -31,7 +32,7 @@ namespace PS2MapTool.Services
         }
 
         /// <inheritdoc />
-        public Task<AreasInfo> GetAreasInfoAsync(World world, CancellationToken ct = default)
+        public Task<AreasInfo> GetAreasAsync(World world, CancellationToken ct = default)
         {
             throw new NotImplementedException();
         }

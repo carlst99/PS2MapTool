@@ -24,6 +24,6 @@ namespace PS2MapTool.Services.Abstractions
         /// </summary>
         /// <param name="world">The world to retrieve the area data of.</param>
         /// <returns>The areas info.</returns>
-        Task<AreasInfo> GetAreasInfoAsync(World world, CancellationToken ct = default);
+        Task<AreasInfo> GetAreasAsync(World world, CancellationToken ct = default);
     }
 }

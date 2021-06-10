@@ -35,7 +35,7 @@ namespace PS2MapTool.Services
         }
 
         /// <inheritdoc />
-        public async Task<AreasInfo> GetAreasInfoAsync(World world, CancellationToken ct = default)
+        public async Task<AreasInfo> GetAreasAsync(World world, CancellationToken ct = default)
         {
             if (!Directory.Exists(_directory))
                 throw new DirectoryNotFoundException("The supplied directory does not exist.");
