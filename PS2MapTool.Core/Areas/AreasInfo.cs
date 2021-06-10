@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace PS2MapTool.Core
+namespace PS2MapTool.Core.Areas
 {
     /// <summary>
     /// Contains information about an areas data source.

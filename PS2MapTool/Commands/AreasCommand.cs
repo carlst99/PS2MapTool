@@ -3,6 +3,7 @@ using CliFx.Attributes;
 using CliFx.Exceptions;
 using CliFx.Infrastructure;
 using PS2MapTool.Core;
+using PS2MapTool.Core.Areas;
 using PS2MapTool.Core.Services;
 using SixLabors.ImageSharp;
 using System.Collections.Generic;

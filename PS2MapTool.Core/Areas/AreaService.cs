@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
-namespace PS2MapTool.Core.Services
+namespace PS2MapTool.Core.Areas
 {
     /// <summary>
     /// Provides functions to get and manipulate no-deploy areas.

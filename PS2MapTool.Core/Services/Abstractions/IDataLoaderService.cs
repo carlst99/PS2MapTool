@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using PS2MapTool.Core.Areas;
+using PS2MapTool.Core.Tiles;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 

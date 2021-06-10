@@ -1,4 +1,4 @@
-﻿namespace PS2MapTool.Core
+﻿namespace PS2MapTool.Core.Areas
 {
     /// <summary>
     /// Defines an area, with properties selectively chosen for the purpose of storing no-deploy areas.

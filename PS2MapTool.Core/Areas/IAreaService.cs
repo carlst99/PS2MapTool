@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PS2MapTool.Core.Services.Abstractions
+namespace PS2MapTool.Core.Areas
 {
     /// <summary>
     /// Provides functions to get and manipulate no-deploy areas.

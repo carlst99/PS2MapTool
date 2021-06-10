@@ -1,4 +1,4 @@
-﻿namespace PS2MapTool.Core
+﻿namespace PS2MapTool.Core.Areas
 {
     public enum NoDeployType
     {

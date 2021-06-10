@@ -1,4 +1,6 @@
-﻿using PS2MapTool.Core.Services.Abstractions;
+﻿using PS2MapTool.Core.Areas;
+using PS2MapTool.Core.Services.Abstractions;
+using PS2MapTool.Core.Tiles;
 using System;
 using System.Collections.Generic;
 using System.IO;

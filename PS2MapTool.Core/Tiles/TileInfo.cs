@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace PS2MapTool.Core
+namespace PS2MapTool.Core.Tiles
 {
     /// <summary>
     /// Contains information about a tile data source.
