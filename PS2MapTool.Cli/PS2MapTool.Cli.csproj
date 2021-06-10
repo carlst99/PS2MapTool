@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PS2MapTool.Core\PS2MapTool.csproj" />
+    <ProjectReference Include="..\PS2MapTool\PS2MapTool.csproj" />
   </ItemGroup>
 
   <ItemGroup>
