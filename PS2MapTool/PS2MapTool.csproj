@@ -15,6 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PS2MapTool.Core\PS2MapTool.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="optipng.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

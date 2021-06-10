@@ -1,7 +1,8 @@
 {
   "profiles": {
     "PS2MapBuilder": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "areas \"C:\\Users\\carls\\source\\repos\\_PS2Modding\\_External\\forgelight-toolbox_inUse\\FLUtils\\Unpacked\\data_x64_0\""
     }
   }
 }
