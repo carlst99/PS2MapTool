@@ -1,7 +1,9 @@
 # PS2MapTool
 
-Each of PlanetSide 2's continent maps is stored in the game files as a number of 256x256 tiles, for various levels of detail. This is a tool to manipulate and stitch together those tiles into a full map.
-Additionally, no-deployment zones can be extracted - to achieve this currently you'll have to build from the `m_coreRefactor` branch.
+This is a tool to create PlanetSide 2 continent maps from the data stored in the game assets. Current features:
+
+- Stitching of continent map tiles
+- Creation of no-deployment zone images
 
 ## Usage
 
@@ -11,13 +13,17 @@ Additionally, no-deployment zones can be extracted - to achieve this currently y
     ```
     PS2MapTool.exe
     ```
-4. :warning: See [Tile Extraction](#tile-extraction)
+4. :warning: See [Map Data Extraction](#map-data-extraction)
 
-### Tile Extraction
+### Map Data Extraction
 
-You will first need to extract the tiles from the game assets. The capability to do this will (eventually) be coming to this tool, but in the meantime I suggest you use Rhett's [forgelight-toolbox](https://github.com/RhettVX/forgelight-toolbox).
+You will first need to extract the map data from the game assets. The capability to do this will (eventually) be coming to this tool, but in the meantime I suggest you use Rhett's [forgelight-toolbox](https://github.com/RhettVX/forgelight-toolbox).
 
-Tiles can be found in the world data packs, which have the naming format `<World>_x64_(0-9).pack2` and are found in the PlanetSide installation folder (`...\PlanetSide 2\Resources\Assets`). Each tile is a DDS image file, named in the format `<World>_Tile_<YPos>_<XPos>_LOD(0-3).dds`.
+Game assets (`*.pack2` files) are found in the PlanetSide installation folder (`...\PlanetSide 2\Resources\Assets`).
+
+Tiles can be found in the world data packs, which have the naming format `<World>_x64_(0-9).pack2`. Each tile is a DDS image file, named in the format `<World>_Tile_<YPos>_<XPos>_LOD(0-3).dds`.
+
+Area definition files (for obtaining no-deploy maps) can be found in `data_x64_0.pack2`.
 
 Place all the extracted tiles into one folder before using this tool to stitch them.
 
