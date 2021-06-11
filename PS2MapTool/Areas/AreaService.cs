@@ -37,7 +37,7 @@ namespace PS2MapTool.Areas
         {
             List<AreaDefinition> areas = new();
             AreaDefinition? lastZone = null;
-            AreasInfo areasInfo = await _dataLoader.GetAreasAsync(world, ct).ConfigureAwait(false);
+            AreasSourceInfo areasInfo = await _dataLoader.GetAreasAsync(world, ct).ConfigureAwait(false);
 
             XmlReaderSettings xmlSettings = new()
             {

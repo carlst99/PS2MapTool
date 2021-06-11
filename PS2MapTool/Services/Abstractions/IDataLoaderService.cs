@@ -16,14 +16,16 @@ namespace PS2MapTool.Services.Abstractions
         /// </summary>
         /// <param name="world">The world to retrieve the map tiles of.</param>
         /// <param name="lod">The LOD to retrieve the map tiles of.</param>
+        /// <param name="ct">A <see cref="CancellationToken"/> used to cancel the tile enumeration.</param>
         /// <returns>The tiles.</returns>
-        IAsyncEnumerable<TileInfo> GetTilesAsync(World world, Lod lod, CancellationToken ct = default);
+        IEnumerable<TileInfo> GetTiles(World world, Lod lod, CancellationToken ct = default);
 
         /// <summary>
-        /// Loads an <see cref="AreasInfo"/> object from a data source.
+        /// Loads an <see cref="AreasSourceInfo"/> object from a data source.
         /// </summary>
         /// <param name="world">The world to retrieve the area data of.</param>
+        /// <param name="ct">A <see cref="CancellationToken"/> to stop the operation.</param>
         /// <returns>The areas info.</returns>
-        Task<AreasInfo> GetAreasAsync(World world, CancellationToken ct = default);
+        Task<AreasSourceInfo> GetAreasAsync(World world, CancellationToken ct = default);
     }
 }

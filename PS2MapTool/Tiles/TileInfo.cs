@@ -61,6 +61,13 @@ namespace PS2MapTool.Tiles
             DataSource = dataSource;
         }
 
+        /// <summary>
+        /// Attempts to initialise a tile object with values parsed from the given name.
+        /// </summary>
+        /// <param name="tileName">The name of the tile.</param>
+        /// <param name="dataSource">The tile data.</param>
+        /// <param name="tile">The parsed tile, or null if the operation was unsuccessful.</param>
+        /// <returns>A value indicating if the operation was successful.</returns>
         public static bool TryParse(string tileName, Stream dataSource, out TileInfo? tile)
         {
             tile = null;

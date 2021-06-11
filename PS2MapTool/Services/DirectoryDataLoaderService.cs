@@ -1,7 +1,6 @@
 ﻿using PS2MapTool.Areas;
 using PS2MapTool.Services.Abstractions;
 using PS2MapTool.Tiles;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -15,36 +14,60 @@ namespace PS2MapTool.Services
     public sealed class DirectoryDataLoaderService : IDataLoaderService
     {
         private readonly string _directory;
-        private readonly bool _searchSubdirectories;
+        private readonly SearchOption _searchOption;
 
         /// <summary>
         /// Initialises a new instance of the <see cref="DirectoryDataLoaderService"/> object.
         /// </summary>
         /// <param name="directory"></param>
         /// <param name="searchSubdirectories"></param>
-        public DirectoryDataLoaderService(string directory, bool searchSubdirectories)
+        public DirectoryDataLoaderService(string directory, SearchOption searchOption)
         {
             _directory = directory;
-            _searchSubdirectories = searchSubdirectories;
+            _searchOption = searchOption;
         }
 
         /// <inheritdoc />
-        public IAsyncEnumerable<TileInfo> GetTilesAsync(World world, Lod lod, CancellationToken ct = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public async Task<AreasInfo> GetAreasAsync(World world, CancellationToken ct = default)
+        public IEnumerable<TileInfo> GetTiles(World world, Lod lod, CancellationToken ct = default)
         {
             if (!Directory.Exists(_directory))
-                throw new DirectoryNotFoundException("The supplied directory does not exist.");
+                throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
+
+            EnumerationOptions enumerationOptions = new()
+            {
+                MatchCasing = MatchCasing.CaseInsensitive,
+                RecurseSubdirectories = _searchOption == SearchOption.AllDirectories
+            };
+            string searchPattern = world.ToString() + "_Tile_*_*_" + lod.ToString();
+
+            foreach (string path in Directory.EnumerateFiles(_directory, searchPattern, enumerationOptions))
+            {
+                FileStream fs = new(path, FileMode.Open, FileAccess.Read);
+
+                if (TileInfo.TryParse(Path.GetFileNameWithoutExtension(path), fs, out TileInfo? tile))
+                {
+#pragma warning disable CS8603 // Possible null reference return.
+                    yield return tile;
+                }
+#pragma warning restore CS8603 // Possible null reference return.
+                else
+                {
+                    fs.Dispose();
+                }
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<AreasSourceInfo> GetAreasAsync(World world, CancellationToken ct = default)
+        {
+            if (!Directory.Exists(_directory))
+                throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
 
             string fileName = world.ToString() + "Areas.xml";
 
             string? filePath = await Task.Run(() =>
             {
-                if (_searchSubdirectories)
+                if (_searchOption == SearchOption.AllDirectories)
                 {
                     return RecursiveFileSearch(fileName, _directory, ct);
                 }
@@ -61,7 +84,7 @@ namespace PS2MapTool.Services
             if (filePath is null)
                 throw new FileNotFoundException("The Areas file for this world could not be found.");
             else
-                return new AreasInfo(world, new FileStream(filePath, FileMode.Open, FileAccess.Read));
+                return new AreasSourceInfo(world, new FileStream(filePath, FileMode.Open, FileAccess.Read));
         }
 
         /// <summary>
@@ -71,7 +94,8 @@ namespace PS2MapTool.Services
         /// <param name="directory">The root directory to search.</param>
         /// <param name="ct">A <see cref="CancellationToken"/> to cancel the search with.</param>
         /// <returns>The path to the file, or a null value if the file could not be found.</returns>
-        private string? RecursiveFileSearch(string fileName, string directory, CancellationToken ct = default)
+        /// <remarks>The search is performed in a depth-first manner.</remarks>
+        private static string? RecursiveFileSearch(string fileName, string directory, CancellationToken ct = default)
         {
             if (ct.IsCancellationRequested)
                 return null;

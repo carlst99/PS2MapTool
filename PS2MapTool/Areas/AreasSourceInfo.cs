@@ -7,7 +7,7 @@ namespace PS2MapTool.Areas
     /// <summary>
     /// Contains information about an areas data source.
     /// </summary>
-    public record AreasInfo : IAsyncDisposable
+    public record AreasSourceInfo : IAsyncDisposable
     {
         /// <summary>
         /// The world of the areas.
@@ -20,16 +20,16 @@ namespace PS2MapTool.Areas
         public Stream DataSource { get; init; }
 
         /// <summary>
-        /// Gets a value indicating if this <see cref="AreasInfo"/> object has been disposed.
+        /// Gets a value indicating if this <see cref="AreasSourceInfo"/> object has been disposed.
         /// </summary>
         public bool IsDisposed { get; protected set; }
 
         /// <summary>
-        /// Initialises a new instance of the <see cref="AreasInfo"/> object.
+        /// Initialises a new instance of the <see cref="AreasSourceInfo"/> object.
         /// </summary>
         /// <param name="world">The world of the areas.</param>
         /// <param name="dataSource">The data source.</param>
-        public AreasInfo(World world, Stream dataSource)
+        public AreasSourceInfo(World world, Stream dataSource)
         {
             World = world;
             DataSource = dataSource;
