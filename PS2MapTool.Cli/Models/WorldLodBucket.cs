@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PS2MapTool.Models
+namespace PS2MapTool.Cli.Models
 {
     public class WorldLodBucket
     {

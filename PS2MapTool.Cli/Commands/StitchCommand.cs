@@ -2,9 +2,9 @@
 using CliFx.Attributes;
 using CliFx.Exceptions;
 using CliFx.Infrastructure;
-using PS2MapTool.Models;
-using PS2MapTool.Services;
-using PS2MapTool.Validators;
+using PS2MapTool.Cli.Models;
+using PS2MapTool.Cli.Services;
+using PS2MapTool.Cli.Validators;
 using SixLabors.ImageSharp;
 using Spectre.Console;
 using System;
@@ -14,7 +14,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PS2MapTool.Commands
+namespace PS2MapTool.Cli.Commands
 {
     [Command("stitch", Description = "Stitches LOD tiles together to form a complete map. Maps will be created for all World/LOD combinations found in the source directory, unless otherwise specified.")]
     public class StitchCommand : ICommand

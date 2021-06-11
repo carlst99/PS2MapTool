@@ -5,7 +5,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PS2MapTool.Services
+namespace PS2MapTool.Cli.Services
 {
     public class CompressionService
     {

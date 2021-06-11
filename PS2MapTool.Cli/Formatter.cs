@@ -1,4 +1,4 @@
-﻿namespace PS2MapTool
+﻿namespace PS2MapTool.Cli
 {
     public static class Formatter
     {
