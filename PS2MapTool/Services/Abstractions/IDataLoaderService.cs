@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace PS2MapTool.Services.Abstractions
 {
     /// <summary>
-    /// Provides functions to load mapping data.
+    /// Provides functions to load map data.
     /// </summary>
     public interface IDataLoaderService
     {

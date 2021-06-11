@@ -38,7 +38,7 @@ namespace PS2MapTool.Services
                 MatchCasing = MatchCasing.CaseInsensitive,
                 RecurseSubdirectories = _searchOption == SearchOption.AllDirectories
             };
-            string searchPattern = world.ToString() + "_Tile_*_*_" + lod.ToString();
+            string searchPattern = world.ToString() + "_Tile_???_???_" + lod.ToString();
 
             foreach (string path in Directory.EnumerateFiles(_directory, searchPattern, enumerationOptions))
             {
