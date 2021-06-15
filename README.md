@@ -29,7 +29,7 @@ Place all the extracted tiles into one folder before using this tool to stitch t
 
 ## Tile/Stitching Information
 
-Each tile is 256x256 pixels in dimension. Tiles are present for four levels of detail (LODs), ranging from 0-3. LOD3 is comprised of 16 tiles, with each LOD increasing the tile count by four times, up to 1024 tiles for LOD0.
+Each tile is 256x256 pixels in dimension. Tiles are present for four levels of detail (LODs), ranging from 0-3. LOD3 is comprised of 16 tiles, with each LOD multiplying the tile count by four, up to 1024 tiles for LOD0.
 
 To form a map from the tiles, the following process is used
 
@@ -52,7 +52,7 @@ Here's an example XML object for a **no-deploy** area:
 </AreaDefinition>
 ```
 
-It is important to note that `Type` attribute on the `Property` element for a no-deploy area will always be set to `SundererNoDeploy`, regardless of whether it is intended for Sunderers or ANTs. The `Requirement` attribute is used to differentiate, with the current values being:
+It is important to note that the `Type` attribute on the `Property` element for a no-deploy area will always be set to `SundererNoDeploy`, regardless of whether it is intended for Sunderers or ANTs. The `Requirement` attribute is used to differentiate, with the current values being:
 
 - **200** - Sunderer no-deploy
 - **2336** - ANT no-deploy
