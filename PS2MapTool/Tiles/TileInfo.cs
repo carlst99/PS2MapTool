@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -68,7 +69,7 @@ namespace PS2MapTool.Tiles
         /// <param name="dataSource">The tile data.</param>
         /// <param name="tile">The parsed tile, or null if the operation was unsuccessful.</param>
         /// <returns>A value indicating if the operation was successful.</returns>
-        public static bool TryParse(string tileName, Stream dataSource, out TileInfo? tile)
+        public static bool TryParse(string tileName, Stream dataSource, [NotNullWhen(true)] out TileInfo? tile)
         {
             tile = null;
             string[] nameComponents = tileName.Split('_');

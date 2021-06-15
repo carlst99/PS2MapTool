@@ -5,6 +5,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -108,7 +109,7 @@ namespace PS2MapTool.Areas
         /// <param name="reader">The <see cref="XmlReader"/> to use.</param>
         /// <param name="area">The parsed zone.</param>
         /// <returns>A value indicating if the parse operation completed successfully.</returns>
-        private static bool TryParseNoDeployInfo(XmlReader reader, out AreaDefinition? area)
+        private static bool TryParseNoDeployInfo(XmlReader reader, [NotNullWhen(true)] out AreaDefinition? area)
         {
             area = null;
             string? xVal = reader.GetAttribute("x1");
