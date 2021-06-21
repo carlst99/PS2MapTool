@@ -65,3 +65,5 @@ PS2MapTool makes use of the following libraries:
 - [Pfim](https://github.com/nickbabcock/Pfim)
 - [ImageSharp](https://github.com/SixLabors/ImageSharp)
 - [Spectre.Console](https://github.com/spectreconsole/spectre.console)
+
+[OptiPNG](http://optipng.sourceforge.net) is used to compress the compiled PNG images.
