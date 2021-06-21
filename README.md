@@ -34,10 +34,10 @@ Each tile is 256x256 pixels in dimension. Tiles are present for four levels of d
 To form a map from the tiles, the following process is used
 
 1. Rotate each tile by 270 degrees clockwise.
-2. Stitch the tiles together in order of decreasing X value and increase Y value going left->right, top->bottom, i.e
-    (x-, y-) | (x+, y-)
+2. Stitch the tiles together in order of decreasing X value and increasing Y value going left->right, top->bottom, i.e
+    (x+, y-) | (x-, y-)
     --- | ---
-    (x-, y+) | (x+, y+)
+    (x+, y+) | (x-, y+)
 3. Rotate the final product by 90 degrees clockwise and flip it vertically.
 
 ## No-deployment Zone Information
