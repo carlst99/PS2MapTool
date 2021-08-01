@@ -1,27 +1,45 @@
 ﻿using PS2MapTool.Services.Abstractions;
-using PS2MapTool.Tiles;
-using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 
 namespace PS2MapTool.Services
 {
     public sealed class TileProcessorServiceRepository
     {
-        private readonly Dictionary<TileImageFormatType, ITileProcessorService> _repository;
+        private readonly List<ITileProcessorService> _repository;
 
         public TileProcessorServiceRepository()
         {
-            _repository = new Dictionary<TileImageFormatType, ITileProcessorService>();
+            _repository = new List<ITileProcessorService>();
         }
 
-        public void Add<T>(TileImageFormatType type, T processor) where T : ITileProcessorService
+        public void Add<T>(T processor) where T : ITileProcessorService
         {
-            if (_repository.ContainsKey(type))
-                throw new ArgumentException("A processor of that type has already been added");
-
-            _repository.Add(type, processor);
+            _repository.Add(processor);
         }
 
-        public ITileProcessorService Get(TileImageFormatType type) => _repository[type];
+        /// <summary>
+        /// Tries to get a <see cref="ITileProcessorService"/> that can load tiles of the given format.
+        /// </summary>
+        /// <param name="tileDataSource">The tile data to load.</param>
+        /// <param name="tileProcessorService">The resolved processor service.</param>
+        /// <returns>A value indicating if a processor service was found.</returns>
+        public bool TryGet(Stream tileDataSource, [NotNullWhen(true)] out ITileProcessorService? tileProcessorService)
+        {
+            foreach (ITileProcessorService processor in _repository)
+            {
+                if (processor.CanLoad(tileDataSource))
+                {
+                    tileProcessorService = processor;
+                    return true;
+                }
+            }
+
+            tileProcessorService = null;
+            return false;
+        }
+
+        public IReadOnlyList<ITileProcessorService> GetAll() => _repository.AsReadOnly();
     }
 }
