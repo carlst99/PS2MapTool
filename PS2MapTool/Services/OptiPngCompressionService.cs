@@ -1,8 +1,10 @@
 ﻿using PS2MapTool.Exceptions;
 using PS2MapTool.Services.Abstractions;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,7 +29,7 @@ namespace PS2MapTool.Services
             if (!File.Exists(filePath))
                 throw new FileNotFoundException("Could not find the file to compress", filePath);
 
-            Process? process = Process.Start(new ProcessStartInfo(OPTIPNG_FILE_NAME, filePath)
+            Process? process = Process.Start(new ProcessStartInfo(OPTIPNG_FILE_NAME, $"-o3 {filePath}")
             {
                 CreateNoWindow = true,
                 RedirectStandardError = true
@@ -36,14 +38,28 @@ namespace PS2MapTool.Services
             if (process is null)
                 throw new OptiPngException("Could not start OptiPNG process");
 
-            // OptiPNG outputs to stderr, and also seems to use a 'starter process', resulting in Process.HasExited being set initially. Waiting for output solves this.
-            bool canWait = false;
-            process.BeginErrorReadLine();
-            process.ErrorDataReceived += (_, __) => canWait = true;
-            while (!canWait)
-                await Task.Delay(100, ct).ConfigureAwait(false);
+            process.WaitForExit();
+            return;
 
-            await process.WaitForExitAsync(ct).ConfigureAwait(false);
+            // OptiPNG uses a starter process, resulting in the main process exiting almost immediately. Hence, we'll try to find its children on Windows.
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                foreach (Process child in process.GetChildren())
+                    process.WaitForExit();
+
+                process.WaitForExit();
+                //await process.WaitForExitAsync(ct).ConfigureAwait(false);
+            }
+            else // Else, we'll wait for output, which gets bubbled up somehow (and somewhat unreliably) and then seems to 'un-exit' the process. Note that OptiPNG outputs to stderr.
+            {
+                bool canWait = false;
+                process.BeginErrorReadLine();
+                process.ErrorDataReceived += (_, __) => canWait = true;
+                while (!canWait)
+                    await Task.Delay(100, ct).ConfigureAwait(false);
+
+                await process.WaitForExitAsync(ct).ConfigureAwait(false);
+            }
         }
     }
 }

@@ -87,7 +87,7 @@ namespace PS2MapTool.Cli.Commands
                         _console.MarkupLine($"Stitching tiles for { Formatter.World(world) } at { Formatter.Lod(lod) }...");
 
                         IList<TileInfo> tiles = tileBucket.GetTiles(world, lod);
-                        using Image<Rgba32> map = await _imageStitchService.StitchTilesAsync(tiles, _ct).ConfigureAwait(false);
+                        Image<Rgba32> map = await _imageStitchService.StitchTilesAsync(tiles, _ct).ConfigureAwait(false);
 
                         _console.MarkupLine($"Saving { Formatter.World(world) } at { Formatter.Lod(lod) }...");
 
@@ -95,6 +95,8 @@ namespace PS2MapTool.Cli.Commands
                         string outputFilePath = Path.Combine(OutputPath, $"{world}_{lod}.png");
                         map.SaveAsPng(outputFilePath);
                         _console.MarkupLine($"{ Formatter.Success("Completed") } saving { Formatter.World(world) } at { Formatter.Lod(lod) } to { Formatter.Path(outputFilePath) }");
+
+                        map.Dispose(); // We manually dispose to ensure that the resource is released before compressing it.
 
                         if (!DisableCompression)
                         {
