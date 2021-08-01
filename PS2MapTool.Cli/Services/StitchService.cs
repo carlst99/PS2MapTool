@@ -57,7 +57,7 @@ namespace PS2MapTool.Cli.Services
         /// <param name="tileBucket">The tiles to stitch.</param>
         /// <param name="outputPath">The path to output the map to.</param>
         /// <param name="completionCallback">Will be called on a successful stitch, with the path to the saved map as the parameter.</param>
-        public void StitchTiles(WorldLodBucket tileBucket, string outputPath, CancellationToken ct, Action<string>? completionCallback = null)
+        public void StitchTiles(WorldLodBucket tileBucket, string outputPath, CancellationToken ct, Func<string, Task>? completionCallback = null)
         {
             foreach (World world in tileBucket.GetWorlds())
             {
@@ -74,7 +74,7 @@ namespace PS2MapTool.Cli.Services
         /// <param name="tiles">The tiles to stitch.</param>
         /// <param name="outputPath">The path to output the map to.</param>
         /// <param name="completionCallback">Will be called on a successful stitch, with the path to the saved map as the parameter.</param>
-        public void StitchTiles(IList<Tile> tiles, string outputPath, CancellationToken ct, Action<string>? completionCallback = null)
+        public void StitchTiles(IList<Tile> tiles, string outputPath, CancellationToken ct, Func<string, Task>? completionCallback = null)
         {
             Task<string> stitchTask = new(() =>
             {
@@ -124,10 +124,10 @@ namespace PS2MapTool.Cli.Services
                 return outputFilePath;
             }, ct, TaskCreationOptions.LongRunning);
 
-            stitchTask.ContinueWith((t) =>
+            stitchTask.ContinueWith(async t =>
             {
                 if (t.IsCompletedSuccessfully && completionCallback is not null)
-                    completionCallback(t.Result);
+                    await completionCallback(t.Result).ConfigureAwait(false);
             }, ct);
 
             _taskRunner.EnqueueTask(stitchTask);

@@ -19,8 +19,8 @@ namespace PS2MapTool.Services
         /// <summary>
         /// Initialises a new instance of the <see cref="DirectoryDataLoaderService"/> object.
         /// </summary>
-        /// <param name="directory"></param>
-        /// <param name="searchSubdirectories"></param>
+        /// <param name="directory">The directory to search for files in.</param>
+        /// <param name="searchOption">The search option to use.</param>
         public DirectoryDataLoaderService(string directory, SearchOption searchOption)
         {
             _directory = directory;

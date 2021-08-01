@@ -7,13 +7,16 @@ This is a tool to create PlanetSide 2 continent maps from the data stored in the
 
 ## Usage
 
-1. Ensure that the [.NET 5 Runtime](https://dotnet.microsoft.com/download) is installed.
-2. Grab a copy of PS2MapTool from the [releases](https://github.com/carlst99/PS2MapTool/releases). Only Windows x64 binaries are available.
-3. Open your favourite terminal and run the following command in the folder you downloaded the binary to. The built-in help will guide you from here.
+1. Grab a copy of PS2MapTool from the [releases](https://github.com/carlst99/PS2MapTool/releases). Only Windows x64 binaries are available.
+
+    1. The executables suffixed with `FD` are framework-dependent. These are much smaller in size (~3mb vs ~21mb) but require you to have the [.NET 5 Runtime](https://dotnet.microsoft.com/download) installed.
+
+2. Open your favourite terminal and run the following command in the folder you downloaded the binary to. The built-in help will guide you from here.
     ```
     PS2MapTool.exe
     ```
-4. :warning: See [Map Data Extraction](#map-data-extraction)
+
+3. :warning: See [Map Data Extraction](#map-data-extraction)
 
 ### Map Data Extraction
 
@@ -25,7 +28,7 @@ Tiles can be found in the world data packs, which have the naming format `<World
 
 Area definition files (for obtaining no-deploy maps) can be found in `data_x64_0.pack2`.
 
-Place all the extracted tiles into one folder before using this tool to stitch them.
+Once you've unpacked the relevant assets you can use `PS2MapTool` to process them.
 
 ## Tile/Stitching Information
 
@@ -66,4 +69,4 @@ PS2MapTool makes use of the following libraries:
 - [ImageSharp](https://github.com/SixLabors/ImageSharp)
 - [Spectre.Console](https://github.com/spectreconsole/spectre.console)
 
-[OptiPNG](http://optipng.sourceforge.net) is used to compress the compiled PNG images.
+[OptiPNG](http://optipng.sourceforge.net) is bundled and used to compress the compiled PNG images.

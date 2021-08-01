@@ -5,6 +5,8 @@ using CliFx.Infrastructure;
 using PS2MapTool.Cli.Models;
 using PS2MapTool.Cli.Services;
 using PS2MapTool.Cli.Validators;
+using PS2MapTool.Services;
+using PS2MapTool.Services.Abstractions;
 using SixLabors.ImageSharp;
 using Spectre.Console;
 using System;
@@ -16,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace PS2MapTool.Cli.Commands
 {
-    [Command("stitch", Description = "Stitches LOD tiles together to form a complete map. Maps will be created for all World/LOD combinations found in the source directory, unless otherwise specified.")]
+    [Command("stitch", Description = "Stitch LOD tiles together to form a complete map. Maps will be created for all World/LOD combinations found in the source directory, unless otherwise specified.")]
     public class StitchCommand : ICommand
     {
         private readonly Stopwatch _stopwatch;
@@ -68,9 +70,9 @@ namespace PS2MapTool.Cli.Commands
                 return;
 
             StitchService stitchService = new(_console, _taskRunner);
-            CompressionService compressionService = new(_console, _taskRunner);
+            IImageCompressionService compressionService = new OptiPngCompressionService();
 
-            stitchService.StitchTiles(tileBucket, OutputPath, _ct, (s) => compressionService.Compress(s, _ct));
+            stitchService.StitchTiles(tileBucket, OutputPath, _ct, s => compressionService.CompressAsync(s, _ct));
 
             // Job done, wait for all tasks to complete.
             await _taskRunner.WaitForAll().ConfigureAwait(false);

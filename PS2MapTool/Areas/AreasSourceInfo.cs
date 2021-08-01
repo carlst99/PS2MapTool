@@ -34,9 +34,6 @@ namespace PS2MapTool.Areas
             DataSource = dataSource;
         }
 
-        /// <summary>
-        /// Disposes of the <see cref="DataSource"/>.
-        /// </summary>
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in 'DisposeAsync(bool disposing)' method

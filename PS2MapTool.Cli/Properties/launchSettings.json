@@ -2,7 +2,7 @@
   "profiles": {
     "PS2MapBuilder": {
       "commandName": "Project",
-      "commandLineArgs": "areas"
+      "commandLineArgs": "stitch"
     }
   }
 }

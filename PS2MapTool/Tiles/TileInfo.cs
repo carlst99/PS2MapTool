@@ -8,7 +8,7 @@ namespace PS2MapTool.Tiles
     /// <summary>
     /// Contains information about a tile data source.
     /// </summary>
-    public record TileInfo : IAsyncDisposable
+    public record TileInfo : IDisposable
     {
         /// <summary>
         /// The file extension for raw tiles.
@@ -102,27 +102,20 @@ namespace PS2MapTool.Tiles
             return $"{World}_Tile_{Y}_{X}_{Lod}";
         }
 
-        /// <summary>
-        /// Disposes of the <see cref="DataSource"/>.
-        /// </summary>
-        /// <returns>A value representing the task.</returns>
-        public async ValueTask DisposeAsync()
+        public void Dispose()
         {
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            await DisposeAsync(disposing: true).ConfigureAwait(false);
-#pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
+            Dispose(true);
             GC.SuppressFinalize(this);
-#pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
         }
 
-        protected virtual async ValueTask DisposeAsync(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (!IsDisposed)
             {
                 if (disposing)
                 {
-                    if (DataSource is not null)
-                        await DataSource.DisposeAsync().ConfigureAwait(false);
+                    DataSource.Dispose();
                 }
 
                 IsDisposed = true;
