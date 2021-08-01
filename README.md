@@ -24,7 +24,7 @@ You will first need to extract the map data from the game assets. The capability
 
 Game assets (`*.pack2` files) are found in the PlanetSide installation folder (`...\PlanetSide 2\Resources\Assets`).
 
-Tiles can be found in the world data packs, which have the naming format `<World>_x64_(0-9).pack2`. Each tile is a DDS image file, named in the format `<World>_Tile_<YPos>_<XPos>_LOD(0-3).dds`.
+Tiles can be found in the world data packs, which have the naming format `<World>_x64_(0-9).pack2`. Each tile is a DDS image file, named in the format `<World>_Tile_<XPos>_<YPos>_LOD(0-3).dds`.
 
 Area definition files (for obtaining no-deploy maps) can be found in `data_x64_0.pack2`.
 
@@ -36,12 +36,11 @@ Each tile is 256x256 pixels in dimension. Tiles are present for four levels of d
 
 To form a map from the tiles, the following process is used
 
-1. Rotate each tile by 270 degrees clockwise.
-2. Stitch the tiles together in order of decreasing X value and increasing Y value going left->right, top->bottom, i.e
-    (x+, y-) | (x-, y-)
+1. Flip each tile vertically.
+2. Stitch the tiles together in order of increasing X value and decreasing Y value going left->right, top->bottom, i.e
+    (x-, y+) | (x+, y+)
     --- | ---
-    (x+, y+) | (x-, y+)
-3. Rotate the final product by 90 degrees clockwise and flip it vertically.
+    (x-, y-) | (x+, y-)
 
 ## No-deployment Zone Information
 

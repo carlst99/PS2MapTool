@@ -33,11 +33,15 @@ namespace PS2MapTool.Services
         /// <inheritdoc />
         public virtual async Task<Image<Rgba32>> StitchTilesAsync(IList<TileInfo> tiles, CancellationToken ct = default)
         {
-            IEnumerable<TileInfo> orderedBucket = tiles.OrderByDescending((b) => b.X).ThenBy((b) => b.Y); // TODO: Might need to change this for other swap?
+            IEnumerable<TileInfo> orderedBucket = tiles.OrderByDescending(t => t.Y).ThenBy(t => t.X);
+
+            double root = Math.Sqrt(tiles.Count);
+            if (root != (int)root)
+                throw new InvalidOperationException("There must be a square amount of tiles to stitch them together.");
 
             // Allocate for the stitched image
-            int tilesPerSide = (int)Math.Sqrt(tiles.Count); // Square image, this will always be an integer
-            int pixelsPerSide = tilesPerSide * TILE_SIZE; // Each tile is 256x256 pixels
+            int tilesPerSide = (int)root; // Square image, this will always be an integer
+            int pixelsPerSide = tilesPerSide * TILE_SIZE;
             Image<Rgba32> stitchedImage = new(pixelsPerSide, pixelsPerSide);
 
             // Draw each tile onto the stitched image.
@@ -45,7 +49,7 @@ namespace PS2MapTool.Services
             foreach (TileInfo tile in orderedBucket)
             {
                 using Image tileImage = await _tileProcessorRepository.Get(tile.ImageFormatType).LoadAsync(tile.DataSource, ct).ConfigureAwait(false);
-                tileImage.Mutate(o => o.Rotate(RotateMode.Rotate270));
+                tileImage.Mutate(o => o.Flip(FlipMode.Vertical));
 
                 stitchedImage.Mutate(o => o.DrawImage(tileImage, new Point(x, y), 1f));
 
@@ -60,8 +64,6 @@ namespace PS2MapTool.Services
                     throw new TaskCanceledException();
             }
 
-            // Rotate and flip the stitched image as required.
-            stitchedImage.Mutate(o => o.RotateFlip(RotateMode.Rotate90, FlipMode.Vertical));
             return stitchedImage;
         }
     }

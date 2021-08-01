@@ -85,19 +85,19 @@ namespace PS2MapTool.Tiles
             if (nameComponents.Length != 5)
                 return false;
 
-            if (!Enum.TryParse(nameComponents[0], out World world))
+            if (!Enum.TryParse(nameComponents[0], true, out World world))
                 return false;
 
             if (nameComponents[1] != "Tile")
                 return false;
 
-            if (!int.TryParse(nameComponents[2], out int y))
+            if (!int.TryParse(nameComponents[2], out int x))
                 return false;
 
-            if (!int.TryParse(nameComponents[3], out int x)) // TODO: Testing a swap of the X and Y positions
+            if (!int.TryParse(nameComponents[3], out int y))
                 return false;
 
-            if (!Enum.TryParse(nameComponents[4], out Lod lod))
+            if (!Enum.TryParse(nameComponents[4], true, out Lod lod))
                 return false;
 
             tile = new TileInfo(world, x, y, lod, imageFormatType, dataSource);

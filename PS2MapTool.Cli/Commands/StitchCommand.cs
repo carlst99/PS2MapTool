@@ -121,7 +121,11 @@ namespace PS2MapTool.Cli.Commands
             if (!Directory.Exists(TilesSource))
                 throw new CommandException("The provided tiles source directory does not exist.");
 
-            if (!string.IsNullOrWhiteSpace(OutputPath) && !Directory.Exists(OutputPath))
+            if (string.IsNullOrWhiteSpace(OutputPath))
+            {
+                OutputPath = TilesSource;
+            }
+            else if (!Directory.Exists(OutputPath))
             {
                 try
                 {
@@ -131,10 +135,6 @@ namespace PS2MapTool.Cli.Commands
                 {
                     throw new CommandException("The specified output directory does not exist and could not be created.", innerException: ex);
                 }
-            }
-            else
-            {
-                OutputPath = TilesSource;
             }
 
             _ct = console.RegisterCancellationHandler();
