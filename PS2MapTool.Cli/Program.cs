@@ -7,7 +7,7 @@ namespace PS2MapTool.Cli
     {
         public static async Task<int> Main() =>
             await new CliApplicationBuilder()
-                .SetDescription("Tools to extract and stitch together PlanetSide 2 world map LODs.")
+                .SetDescription("A tool to extract and stitch together PlanetSide 2 maps and no-deploy zones.")
                 .SetTitle("PS2 Map Tools")
                 .AddCommandsFromThisAssembly()
                 .Build()

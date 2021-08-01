@@ -2,6 +2,7 @@
 using PS2MapTool.Services.Abstractions;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace PS2MapTool.Services
     /// <summary>
     /// Provides functions to compress PNG images using OptiPNG.
     /// </summary>
+    [SupportedOSPlatform("Windows")]
     public class OptiPngCompressionService : IImageCompressionService
     {
         public const string OPTIPNG_FILE_NAME = "optipng.exe";
