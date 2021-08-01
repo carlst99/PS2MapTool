@@ -4,21 +4,23 @@ This is a tool to create PlanetSide 2 continent maps from the data stored in the
 
 - Stitching of continent map tiles
 - Creation of no-deployment zone images
-
+q
 ## Usage
 
 1. Grab a copy of PS2MapTool from the [releases](https://github.com/carlst99/PS2MapTool/releases). Only Windows x64 binaries are available.
 
-    1. The executables suffixed with `FD` are framework-dependent. These are much smaller in size (~3mb vs ~21mb) but require you to have the [.NET 5 Runtime](https://dotnet.microsoft.com/download) installed.
+    1. There are two flavours of binaries - framework-dependent and self-contained. The former is much smaller in size (~3mb vs ~28mb) but requires you to have the [.NET 5 Runtime](https://dotnet.microsoft.com/download) installed.
 
-2. Open your favourite terminal and run the following command in the folder you downloaded the binary to. The built-in help will guide you from here.
+2. Open your favourite terminal and run the following command in the directory you downloaded the binary to. The built-in help will guide you from here.
     ```
     PS2MapTool.exe
     ```
 
-3. :warning: See [Map Data Extraction](#map-data-extraction)
+3. If you want to place the binaries in a different location, make sure you shift any other files in the directory along with them.
 
-### Map Data Extraction
+4. :warning: See [Map Data Extraction](#map-asset-extraction)
+
+### Map Asset Extraction
 
 You will first need to extract the map data from the game assets. The capability to do this will (eventually) be coming to this tool, but in the meantime I suggest you use Rhett's [forgelight-toolbox](https://github.com/RhettVX/forgelight-toolbox).
 
