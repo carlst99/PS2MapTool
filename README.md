@@ -1,10 +1,10 @@
 # PS2MapTool
 
-This is a tool to create PlanetSide 2 continent maps from the data stored in the game assets. Current features:
+A tool to create PlanetSide 2 continent maps from the data stored in the game assets. Current features:
 
 - Stitching of continent map tiles
 - Creation of no-deployment zone images
-q
+
 ## Usage
 
 1. Grab a copy of PS2MapTool from the [releases](https://github.com/carlst99/PS2MapTool/releases). Only Windows x64 binaries are available.
