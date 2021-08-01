@@ -21,7 +21,7 @@ namespace PS2MapTool.Services
 
             // Read the tile magic identifier and reset the stream position
             long oldPos = tileSource.Position;
-            byte[] tileMagic = new byte[4];
+            byte[] tileMagic = new byte[8];
             tileSource.Read(tileMagic);
             tileSource.Seek(oldPos, SeekOrigin.Begin);
 
