@@ -18,7 +18,7 @@ namespace PS2MapTool.Services
         /// <exception cref="OptiPngNotFoundException">Thrown when the OptiPNG binary cannot be found.</exception>
         /// <exception cref="FileNotFoundException">Thrown when the file to compress cannot be found.</exception>
         /// <exception cref="OptiPngException">Thrown when an error occurs with the OptiPNG process.</exception>
-        public async Task CompressAsync(string filePath, CancellationToken ct = default)
+        public virtual async Task CompressAsync(string filePath, CancellationToken ct = default)
         {
             if (!File.Exists(OPTIPNG_FILE_NAME))
                 throw new OptiPngNotFoundException();

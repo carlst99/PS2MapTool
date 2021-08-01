@@ -11,10 +11,10 @@ namespace PS2MapTool.Services
     /// <summary>
     /// Provides functions to load mapping data from a directory.
     /// </summary>
-    public sealed class DirectoryDataLoaderService : IDataLoaderService
+    public class DirectoryDataLoaderService : IDataLoaderService
     {
-        private readonly string _directory;
-        private readonly SearchOption _searchOption;
+        protected readonly string _directory;
+        protected readonly SearchOption _searchOption;
 
         /// <summary>
         /// Initialises a new instance of the <see cref="DirectoryDataLoaderService"/> object.
@@ -29,7 +29,7 @@ namespace PS2MapTool.Services
 
         /// <inheritdoc />
         /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
-        public IEnumerable<TileInfo> GetTiles(World world, Lod lod, CancellationToken ct = default)
+        public virtual IEnumerable<TileInfo> GetTiles(World world, Lod lod, CancellationToken ct = default)
         {
             if (!Directory.Exists(_directory))
                 throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
@@ -55,7 +55,7 @@ namespace PS2MapTool.Services
         /// <inheritdoc />
         /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
         /// <exception cref="FileNotFoundException">Thrown when an areas file could not be found.</exception>
-        public async Task<AreasSourceInfo> GetAreasAsync(World world, CancellationToken ct = default)
+        public virtual async Task<AreasSourceInfo> GetAreasAsync(World world, CancellationToken ct = default)
         {
             if (!Directory.Exists(_directory))
                 throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);

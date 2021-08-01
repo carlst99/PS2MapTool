@@ -13,9 +13,7 @@ using System.Xml;
 
 namespace PS2MapTool.Services
 {
-    /// <summary>
-    /// Provides functions to get and manipulate no-deploy areas.
-    /// </summary>
+    /// <inheritdoc cref="IAreaService"/>
     public class AreaService : IAreaService
     {
         /// <summary>
@@ -24,7 +22,7 @@ namespace PS2MapTool.Services
         public const int IMAGE_PIXEL_SIZE = 8192;
 
         /// <inheritdoc />
-        public async Task<IList<AreaDefinition>> GetNoDeployAreasAsync(AreasSourceInfo areasSourceInfo, NoDeployType type, CancellationToken ct = default)
+        public virtual async Task<IList<AreaDefinition>> GetNoDeployAreasAsync(AreasSourceInfo areasSourceInfo, NoDeployType type, CancellationToken ct = default)
         {
             List<AreaDefinition> areas = new();
             AreaDefinition? lastZone = null;
@@ -69,7 +67,7 @@ namespace PS2MapTool.Services
         }
 
         /// <inheritdoc />
-        public async Task<Image<Rgba32>> CreateNoDeployZoneImageAsync(IEnumerable<AreaDefinition> noDeployZones, Lod lod = Lod.Lod0, CancellationToken ct = default)
+        public virtual async Task<Image<Rgba32>> CreateNoDeployZoneImageAsync(IEnumerable<AreaDefinition> noDeployZones, Lod lod = Lod.Lod0, CancellationToken ct = default)
         {
             Image<Rgba32> ndzImage = new(IMAGE_PIXEL_SIZE / GetLodScalar(lod), IMAGE_PIXEL_SIZE / GetLodScalar(lod));
 

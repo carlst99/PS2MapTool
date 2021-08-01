@@ -70,7 +70,7 @@ namespace PS2MapTool.Cli.Commands
                 AreasSourceInfo? areasSourceInfo = null;
                 try
                 {
-                    areasSourceInfo = await dataLoaderService.GetAreasAsync(world).ConfigureAwait(false);
+                    areasSourceInfo = await dataLoaderService.GetAreasAsync(world, _ct).ConfigureAwait(false);
                 }
                 catch (FileNotFoundException)
                 {
@@ -90,10 +90,12 @@ namespace PS2MapTool.Cli.Commands
                     foreach (Lod lod in Lods!)
                     {
                         _console.MarkupLine($"Creating { Formatter.NdzType(type) } no-deploy-zone image for { Formatter.World(world) } at { Formatter.Lod(lod) }...");
+
                         using Image ndzImage = await areaService.CreateNoDeployZoneImageAsync(noDeployZones, lod, _ct).ConfigureAwait(false);
 
                         string outputPath = Path.Combine(OutputPath, $"{world}_{type}_{lod}.png");
-                        await ndzImage.SaveAsPngAsync(outputPath).ConfigureAwait(false);
+                        await ndzImage.SaveAsPngAsync(outputPath, _ct).ConfigureAwait(false);
+
                         _console.MarkupLine($"Image saved to { Formatter.Path(outputPath) }");
                     }
                 }

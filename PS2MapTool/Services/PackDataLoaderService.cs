@@ -11,9 +11,9 @@ namespace PS2MapTool.Services
     /// <summary>
     /// Provides functions to load mapping data from pack2 files.
     /// </summary>
-    public sealed class PackDataLoaderService : IDataLoaderService
+    public class PackDataLoaderService : IDataLoaderService
     {
-        private readonly string _packsLocation;
+        protected readonly string _packsLocation;
 
         /// <summary>
         /// Initialises a new instance of the <see cref="PackDataLoaderService"/> object.
@@ -26,13 +26,13 @@ namespace PS2MapTool.Services
         }
 
         /// <inheritdoc />
-        public IEnumerable<TileInfo> GetTiles(World world, Lod lod, CancellationToken ct = default)
+        public virtual IEnumerable<TileInfo> GetTiles(World world, Lod lod, CancellationToken ct = default)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc />
-        public Task<AreasSourceInfo> GetAreasAsync(World world, CancellationToken ct = default)
+        public virtual Task<AreasSourceInfo> GetAreasAsync(World world, CancellationToken ct = default)
         {
             throw new NotImplementedException();
         }
