@@ -10,7 +10,7 @@ namespace PS2MapTool.Services.Abstractions
     /// <summary>
     /// Provides functions to get and manipulate no-deploy areas.
     /// </summary>
-    public interface IAreaService
+    public interface IAreasService
     {
         /// <summary>
         /// Gets no-deployment areas from an areas data source.

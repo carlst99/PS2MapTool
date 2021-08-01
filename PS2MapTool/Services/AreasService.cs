@@ -13,8 +13,8 @@ using System.Xml;
 
 namespace PS2MapTool.Services
 {
-    /// <inheritdoc cref="IAreaService"/>
-    public class AreaService : IAreaService
+    /// <inheritdoc cref="IAreasService"/>
+    public class AreasService : IAreasService
     {
         /// <summary>
         /// The image size, in pixels, that the area definitions are designed to fit within.

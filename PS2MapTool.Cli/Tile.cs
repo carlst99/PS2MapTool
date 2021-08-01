@@ -1,7 +1,9 @@
-﻿using System;
+﻿using PS2MapTool.Tiles;
+using System;
 
 namespace PS2MapTool.Cli
 {
+    [Obsolete("Use" + nameof(TileInfo), true)]
     public struct Tile
     {
         public string Path { get; private set; }

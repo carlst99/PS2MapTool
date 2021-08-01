@@ -3,8 +3,8 @@ using CliFx.Attributes;
 using CliFx.Exceptions;
 using CliFx.Infrastructure;
 using PS2MapTool.Areas;
-using PS2MapTool.Cli.Validators;
 using PS2MapTool.Services;
+using PS2MapTool.Services.Abstractions;
 using SixLabors.ImageSharp;
 using Spectre.Console;
 using System;
@@ -20,8 +20,9 @@ namespace PS2MapTool.Cli.Commands
     public class AreasCommand : ICommand
     {
         private readonly Stopwatch _stopwatch;
-        private readonly ParallelTaskRunner _taskRunner;
+        private readonly IAreasService _areasService;
 
+        private IDataLoaderService _dataLoaderService;
         private IAnsiConsole _console;
         private CancellationToken _ct;
 
@@ -32,9 +33,6 @@ namespace PS2MapTool.Cli.Commands
 
         [CommandOption('o', Description = "The path to output the compiled no-deploy-zone images to.")]
         public string OutputPath { get; set; }
-
-        [CommandOption("max-parallelism", 'p', Description = "The maximum amount of no-deploy-zones that may be generated in parallel. Lower values use less memory and CPU resources.", Validators = new Type[] { typeof(MaxParallelValidator) })]
-        public int MaxParallelism { get; init; }
 
         [CommandOption("worlds", 'w', Description = "Limits no-deploy-zone generation to the given worlds.")]
         public IReadOnlyList<World>? Worlds { get; set; }
@@ -50,11 +48,10 @@ namespace PS2MapTool.Cli.Commands
         public AreasCommand()
         {
             _stopwatch = new Stopwatch();
-            _taskRunner = new ParallelTaskRunner();
+            _areasService = new AreasService();
 
             AreasFileSource = string.Empty;
             OutputPath = string.Empty;
-            MaxParallelism = 4;
         }
 
         public async ValueTask ExecuteAsync(IConsole console)
@@ -62,15 +59,12 @@ namespace PS2MapTool.Cli.Commands
             Setup(console);
             _stopwatch.Start();
 
-            DirectoryDataLoaderService dataLoaderService = new(AreasFileSource, SearchOption.AllDirectories);
-            AreaService areaService = new();
-
             foreach (World world in Worlds!)
             {
                 AreasSourceInfo? areasSourceInfo = null;
                 try
                 {
-                    areasSourceInfo = await dataLoaderService.GetAreasAsync(world, _ct).ConfigureAwait(false);
+                    areasSourceInfo = await _dataLoaderService.GetAreasAsync(world, _ct).ConfigureAwait(false);
                 }
                 catch (FileNotFoundException)
                 {
@@ -80,7 +74,7 @@ namespace PS2MapTool.Cli.Commands
 
                 foreach (NoDeployType type in NoDeployTypes!)
                 {
-                    IList<AreaDefinition> noDeployZones = await areaService.GetNoDeployAreasAsync(areasSourceInfo!, type, _ct).ConfigureAwait(false);
+                    IList<AreaDefinition> noDeployZones = await _areasService.GetNoDeployAreasAsync(areasSourceInfo!, type, _ct).ConfigureAwait(false);
                     if (noDeployZones.Count == 0)
                     {
                         _console.MarkupLine(Formatter.Warning($"The areas file for { Formatter.World(world) } does not contain any no-deploy-zones of the type { Formatter.NdzType(type) }."));
@@ -91,7 +85,7 @@ namespace PS2MapTool.Cli.Commands
                     {
                         _console.MarkupLine($"Creating { Formatter.NdzType(type) } no-deploy-zone image for { Formatter.World(world) } at { Formatter.Lod(lod) }...");
 
-                        using Image ndzImage = await areaService.CreateNoDeployZoneImageAsync(noDeployZones, lod, _ct).ConfigureAwait(false);
+                        using Image ndzImage = await _areasService.CreateNoDeployZoneImageAsync(noDeployZones, lod, _ct).ConfigureAwait(false);
 
                         string outputPath = Path.Combine(OutputPath, $"{world}_{type}_{lod}.png");
                         await ndzImage.SaveAsPngAsync(outputPath, _ct).ConfigureAwait(false);
@@ -128,6 +122,9 @@ namespace PS2MapTool.Cli.Commands
                 }
             }
 
+            _ct = console.RegisterCancellationHandler();
+            _dataLoaderService = new DirectoryDataLoaderService(AreasFileSource, SearchOption.AllDirectories);
+
             Worlds ??= Enum.GetValues<World>();
             Lods ??= Enum.GetValues<Lod>();
             NoDeployTypes ??= Enum.GetValues<NoDeployType>();
@@ -136,10 +133,6 @@ namespace PS2MapTool.Cli.Commands
             {
                 Out = new AnsiConsoleOutput(console.Output)
             });
-
-            _ct = console.RegisterCancellationHandler();
-
-            _taskRunner.Start(_ct, MaxParallelism, e => console.Error.WriteLine(e));
         }
     }
 }

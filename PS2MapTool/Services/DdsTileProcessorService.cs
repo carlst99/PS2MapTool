@@ -14,7 +14,7 @@ namespace PS2MapTool.Services
         /// <inheritdoc />
         /// <remarks>This operation does not complete asynchronously.</remarks>
         /// <returns>An <see cref="Image{Bgra32}"/>.</returns>
-        public virtual Task<Image> Load(Stream tileSource, CancellationToken ct = default)
+        public virtual Task<Image> LoadAsync(Stream tileSource, CancellationToken ct = default)
         {
             using Pfim.IImage image = Pfim.Pfim.FromStream(tileSource);
             byte[] newData;

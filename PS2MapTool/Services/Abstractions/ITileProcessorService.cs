@@ -16,6 +16,6 @@ namespace PS2MapTool.Services.Abstractions
         /// <param name="tileSource">The tile data stream.</param>
         /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
         /// <returns>An <see cref="Image"/>. The type pixel buffer is determined by the implementing class.</returns>
-        Task<Image> Load(Stream tileSource, CancellationToken ct = default);
+        Task<Image> LoadAsync(Stream tileSource, CancellationToken ct = default);
     }
 }

@@ -18,6 +18,6 @@ namespace PS2MapTool.Services.Abstractions
         /// <param name="tiles">The tile to stitch.</param>
         /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
         /// <returns>An <see cref="Image{Rgba32}"/>.</returns>
-        Task<Image<Rgba32>> StitchTiles(IList<TileInfo> tiles, CancellationToken ct = default);
+        Task<Image<Rgba32>> StitchTilesAsync(IList<TileInfo> tiles, CancellationToken ct = default);
     }
 }

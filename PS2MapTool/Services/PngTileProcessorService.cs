@@ -12,7 +12,7 @@ namespace PS2MapTool.Services
     {
         /// <inheritdoc />
         /// <returns>An <see cref="Image{Rgba32}"/>.</returns>
-        public virtual async Task<Image> Load(Stream tileSource, CancellationToken ct = default)
+        public virtual async Task<Image> LoadAsync(Stream tileSource, CancellationToken ct = default)
         {
             return await Image.LoadAsync<Rgba32>(Configuration.Default, tileSource, ct).ConfigureAwait(false);
         }

@@ -2,7 +2,7 @@
   "profiles": {
     "PS2MapBuilder": {
       "commandName": "Project",
-      "commandLineArgs": "stitch"
+      "commandLineArgs": "stitch C:\\Users\\carls\\source\\repos\\_PS2Modding\\_External\\forgelight-toolbox_inUse\\FLUtils\\Unpacked\\Sanctuary -l 3 -w Sanctuary"
     }
   }
 }

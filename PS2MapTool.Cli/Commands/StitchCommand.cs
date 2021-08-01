@@ -2,12 +2,12 @@
 using CliFx.Attributes;
 using CliFx.Exceptions;
 using CliFx.Infrastructure;
-using PS2MapTool.Cli.Models;
-using PS2MapTool.Cli.Services;
 using PS2MapTool.Cli.Validators;
 using PS2MapTool.Services;
 using PS2MapTool.Services.Abstractions;
+using PS2MapTool.Tiles;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using Spectre.Console;
 using System;
 using System.Collections.Generic;
@@ -23,7 +23,10 @@ namespace PS2MapTool.Cli.Commands
     {
         private readonly Stopwatch _stopwatch;
         private readonly ParallelTaskRunner _taskRunner;
+        private readonly IImageStitchService _imageStitchService;
+        private readonly IImageCompressionService _compressionService;
 
+        private IDataLoaderService _dataLoader;
         private IAnsiConsole _console;
         private CancellationToken _ct;
 
@@ -42,10 +45,10 @@ namespace PS2MapTool.Cli.Commands
         public int MaxParallelism { get; init; }
 
         [CommandOption("worlds", 'w', Description = "Limits map generation to the given worlds.")]
-        public IReadOnlyList<World>? Worlds { get; init; }
+        public IReadOnlyList<World>? Worlds { get; set; }
 
         [CommandOption("lods", 'l', Description = "Limits map generation to the given LODs")]
-        public IReadOnlyList<Lod>? Lods { get; init; }
+        public IReadOnlyList<Lod>? Lods { get; set; }
 
         #endregion
 
@@ -53,6 +56,12 @@ namespace PS2MapTool.Cli.Commands
         {
             _stopwatch = new Stopwatch();
             _taskRunner = new ParallelTaskRunner();
+            _compressionService = new OptiPngCompressionService();
+
+            TileProcessorServiceRepository repo = new();
+            repo.Add(TileImageFormatType.DDS, new DdsTileProcessorService());
+            repo.Add(TileImageFormatType.PNG, new PngTileProcessorService());
+            _imageStitchService = new ImageStitchService(repo);
 
             TilesSource = string.Empty;
             OutputPath = string.Empty;
@@ -65,20 +74,43 @@ namespace PS2MapTool.Cli.Commands
 
             _stopwatch.Start();
 
-            WorldLodBucket? tileBucket = GetTileBuckets();
+            TileBucket? tileBucket = GetTileBucket();
             if (tileBucket is null)
                 return;
 
-            StitchService stitchService = new(_console, _taskRunner);
-            IImageCompressionService compressionService = new OptiPngCompressionService();
+            foreach (World world in tileBucket.GetWorlds())
+            {
+                foreach (Lod lod in tileBucket.GetLods(world))
+                {
+                    Task t = new(async () =>
+                    {
+                        _console.MarkupLine($"Stitching tiles for { Formatter.World(world) } at { Formatter.Lod(lod) }...");
 
-            stitchService.StitchTiles(tileBucket, OutputPath, _ct, s => compressionService.CompressAsync(s, _ct));
+                        IList<TileInfo> tiles = tileBucket.GetTiles(world, lod);
+                        using Image<Rgba32> map = await _imageStitchService.StitchTilesAsync(tiles, _ct).ConfigureAwait(false);
+
+                        _console.MarkupLine($"Saving { Formatter.World(world) } at { Formatter.Lod(lod) }...");
+
+                        // Save the stitched image.
+                        string outputFilePath = Path.Combine(OutputPath, $"{world}_{lod}.png");
+                        map.SaveAsPng(outputFilePath);
+                        _console.MarkupLine($"{ Formatter.Success("Completed") } saving { Formatter.World(world) } at { Formatter.Lod(lod) } to { Formatter.Path(outputFilePath) }");
+
+                        if (!DisableCompression)
+                        {
+                            _console.MarkupLine($"Compressing { Formatter.World(world) } at { Formatter.Lod(lod) }...");
+                            await _compressionService.CompressAsync(outputFilePath, _ct).ConfigureAwait(false);
+                            _console.MarkupLine($"{ Formatter.Success("Completed") } compressing { Formatter.World(world) } at { Formatter.Lod(lod) }");
+                        }
+                    }, _ct, TaskCreationOptions.LongRunning);
+                    _taskRunner.EnqueueTask(t);
+                }
+            }
 
             // Job done, wait for all tasks to complete.
             await _taskRunner.WaitForAll().ConfigureAwait(false);
             _taskRunner.Stop();
 
-            _stopwatch.Stop();
             _console.WriteLine();
             _console.MarkupLine(Formatter.Success("Completed in " + _stopwatch.Elapsed.ToString(@"hh\h\ mm\m\ ss\s")));
             _stopwatch.Reset();
@@ -105,12 +137,16 @@ namespace PS2MapTool.Cli.Commands
                 OutputPath = TilesSource;
             }
 
+            _ct = console.RegisterCancellationHandler();
+            _dataLoader = new DirectoryDataLoaderService(TilesSource, SearchOption.AllDirectories);
+
+            Worlds ??= Enum.GetValues<World>();
+            Lods ??= Enum.GetValues<Lod>();
+
             _console = AnsiConsole.Create(new AnsiConsoleSettings
             {
                 Out = new AnsiConsoleOutput(console.Output)
             });
-
-            _ct = console.RegisterCancellationHandler();
 
             _taskRunner.Start(_ct, MaxParallelism, (e) => console.Error.WriteLine(e));
         }
@@ -118,10 +154,19 @@ namespace PS2MapTool.Cli.Commands
         /// <summary>
         /// Filters through all files in the source directory and sorts tiles into applicable <see cref="_worldLodBuckets"/>.
         /// </summary>
-        private WorldLodBucket? GetTileBuckets()
+        private TileBucket? GetTileBucket()
         {
             _console.Write("Generating tile buckets...");
-            WorldLodBucket bucket = StitchService.GenerateTileBuckets(TilesSource, Worlds, Lods);
+            TileBucket bucket = new();
+
+            foreach (World w in Worlds!)
+            {
+                foreach (Lod l in Lods!)
+                {
+                    IEnumerable<TileInfo> tiles = _dataLoader.GetTiles(w, l, _ct);
+                    bucket.AddTiles(tiles);
+                }
+            }
             _console.MarkupLine("\t " + Formatter.Success("Done"));
 
             _console.WriteLine("Maps will be generated for:");

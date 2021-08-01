@@ -22,8 +22,7 @@ namespace PS2MapTool.Tiles
         /// Adds a tile to the bucket.
         /// </summary>
         /// <param name="tile">The tile to add.</param>
-        /// <returns>A value indicating if the tile was added.</returns>
-        public bool AddLodTile(TileInfo tile)
+        public void AddTile(TileInfo tile)
         {
             // Ensure that the LOD bucket exists for this world
             if (!_lodBucket.ContainsKey(tile.World))
@@ -34,7 +33,16 @@ namespace PS2MapTool.Tiles
                 _lodBucket[tile.World][tile.Lod] = new List<TileInfo>();
 
             _lodBucket[tile.World][tile.Lod].Add(tile);
-            return true;
+        }
+
+        /// <summary>
+        /// Adds multiple tiles to the bucket.
+        /// </summary>
+        /// <param name="tiles">The tiles to add.</param>
+        public void AddTiles(IEnumerable<TileInfo> tiles)
+        {
+            foreach (TileInfo tile in tiles)
+                AddTile(tile);
         }
 
         /// <summary>
@@ -56,7 +64,7 @@ namespace PS2MapTool.Tiles
         /// <param name="world">The world to get tiles for.</param>
         /// <param name="lod">The LOD of the world to get tiles for."/></param>
         /// <returns></returns>
-        public IEnumerable<TileInfo> GetTiles(World world, Lod lod)
+        public List<TileInfo> GetTiles(World world, Lod lod)
         {
             if (!_lodBucket.ContainsKey(world))
                 throw new ArgumentException("No tiles for that world have been stored in this bucket.", nameof(world));

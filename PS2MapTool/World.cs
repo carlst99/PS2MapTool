@@ -1,4 +1,6 @@
-﻿namespace PS2MapTool
+﻿using System.ComponentModel;
+
+namespace PS2MapTool
 {
     public enum World
     {
