@@ -1,13 +1,12 @@
 ﻿using System;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace PS2MapTool.Areas
 {
     /// <summary>
     /// Contains information about an areas data source.
     /// </summary>
-    public record AreasSourceInfo : IAsyncDisposable
+    public record AreasSourceInfo : IDisposable
     {
         /// <summary>
         /// The world of the areas.
@@ -38,23 +37,20 @@ namespace PS2MapTool.Areas
         /// <summary>
         /// Disposes of the <see cref="DataSource"/>.
         /// </summary>
-        /// <returns>A value representing the task.</returns>
-        public async ValueTask DisposeAsync()
+        public void Dispose()
         {
             // Do not change this code. Put cleanup code in 'DisposeAsync(bool disposing)' method
-            await DisposeAsync(disposing: true).ConfigureAwait(false);
-#pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
+            Dispose(disposing: true);
             GC.SuppressFinalize(this);
-#pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
         }
 
-        protected virtual async ValueTask DisposeAsync(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (!IsDisposed)
             {
                 if (disposing)
                 {
-                    await DataSource.DisposeAsync().ConfigureAwait(false);
+                    DataSource.Dispose();
                 }
 
                 IsDisposed = true;

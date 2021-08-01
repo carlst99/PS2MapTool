@@ -36,10 +36,9 @@ namespace PS2MapTool.Cli.Services
         /// <param name="tilesSource">The directory in which the tiles are stored.</param>
         /// <param name="worlds">Setting this parameter will only include tiles of the given worlds.</param>
         /// <param name="lods">Setting this parameter will only include tiles of the given LODs.</param>
-        public static WorldLodBucket GenerateTileBuckets(string tilesSource, IEnumerable<string>? worlds, IEnumerable<int>? lods = null)
+        public static WorldLodBucket GenerateTileBuckets(string tilesSource, IEnumerable<World>? worlds, IEnumerable<Lod>? lods = null)
         {
-            List<string>? normalisedLods = lods?.Select(l => "LOD" + l.ToString()).ToList();
-            WorldLodBucket bucket = new(worlds, normalisedLods);
+            WorldLodBucket bucket = new(worlds, lods);
 
             foreach (string filePath in Directory.EnumerateFiles(tilesSource))
             {
@@ -60,9 +59,9 @@ namespace PS2MapTool.Cli.Services
         /// <param name="completionCallback">Will be called on a successful stitch, with the path to the saved map as the parameter.</param>
         public void StitchTiles(WorldLodBucket tileBucket, string outputPath, CancellationToken ct, Action<string>? completionCallback = null)
         {
-            foreach (string world in tileBucket.GetWorlds())
+            foreach (World world in tileBucket.GetWorlds())
             {
-                foreach (string lod in tileBucket.GetLods(world))
+                foreach (Lod lod in tileBucket.GetLods(world))
                 {
                     StitchTiles(tileBucket.GetTiles(world, lod).ToList(), outputPath, ct, completionCallback);
                 }

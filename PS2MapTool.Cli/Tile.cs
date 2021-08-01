@@ -1,12 +1,14 @@
-﻿namespace PS2MapTool.Cli
+﻿using System;
+
+namespace PS2MapTool.Cli
 {
     public struct Tile
     {
         public string Path { get; private set; }
-        public string World { get; private set; }
+        public World World { get; private set; }
         public int X { get; private set; }
         public int Y { get; private set; }
-        public string Lod { get; private set; }
+        public Lod Lod { get; private set; }
 
         public static bool TryParse(string filePath, out Tile tile)
         {
@@ -16,20 +18,26 @@
             if (nameComponents.Length != 5)
                 return false;
 
-            if (nameComponents[1] != "Tile")
+            if (!Enum.TryParse(nameComponents[0], out World world))
                 return false;
 
-            if (!int.TryParse(nameComponents[3], out int y))
+            if (nameComponents[1] != "Tile")
                 return false;
 
             if (!int.TryParse(nameComponents[2], out int x))
                 return false;
 
+            if (!int.TryParse(nameComponents[3], out int y))
+                return false;
+
+            if (!Enum.TryParse(nameComponents[4], out Lod lod))
+                return false;
+
             tile.Path = filePath;
-            tile.World = nameComponents[0];
+            tile.World = world;
             tile.X = x;
             tile.Y = y;
-            tile.Lod = nameComponents[4];
+            tile.Lod = lod;
 
             return true;
         }

@@ -28,6 +28,7 @@ namespace PS2MapTool.Services
         }
 
         /// <inheritdoc />
+        /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
         public IEnumerable<TileInfo> GetTiles(World world, Lod lod, CancellationToken ct = default)
         {
             if (!Directory.Exists(_directory))
@@ -45,19 +46,15 @@ namespace PS2MapTool.Services
                 FileStream fs = new(path, FileMode.Open, FileAccess.Read);
 
                 if (TileInfo.TryParse(Path.GetFileNameWithoutExtension(path), fs, out TileInfo? tile))
-                {
-#pragma warning disable CS8603 // Possible null reference return.
                     yield return tile;
-                }
-#pragma warning restore CS8603 // Possible null reference return.
                 else
-                {
                     fs.Dispose();
-                }
             }
         }
 
         /// <inheritdoc />
+        /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
+        /// <exception cref="FileNotFoundException">Thrown when an areas file could not be found.</exception>
         public async Task<AreasSourceInfo> GetAreasAsync(World world, CancellationToken ct = default)
         {
             if (!Directory.Exists(_directory))
@@ -88,7 +85,7 @@ namespace PS2MapTool.Services
         }
 
         /// <summary>
-        /// Recursively searches a directory, and all subdirectories, for a file.
+        /// Recursively searches a directory, and all subdirectories, for a file. Faster than searching for a pattern as not all files are enumeration.
         /// </summary>
         /// <param name="fileName">The name of the file to find (including the extension).</param>
         /// <param name="directory">The root directory to search.</param>

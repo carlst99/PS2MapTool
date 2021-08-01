@@ -1,10 +1,11 @@
-﻿using SixLabors.ImageSharp;
+﻿using PS2MapTool.Areas;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PS2MapTool.Areas
+namespace PS2MapTool.Services.Abstractions
 {
     /// <summary>
     /// Provides functions to get and manipulate no-deploy areas.
@@ -14,11 +15,10 @@ namespace PS2MapTool.Areas
         /// <summary>
         /// Gets no-deployment areas from an areas data source.
         /// </summary>
-        /// <param name="world">The world to get the no-deployment areas of.</param>
         /// <param name="type">The type of no-deployment area to get.</param>
         /// <param name="ct">A <see cref="CancellationToken"/> to stop the operation with.</param>
         /// <returns>A list of <see cref="AreaDefinition"/>s that define the relevant no-deploy areas.</returns>
-        Task<IList<AreaDefinition>> GetNoDeployAreasAsync(World world, NoDeployType type, CancellationToken ct = default);
+        Task<IList<AreaDefinition>> GetNoDeployAreasAsync(AreasSourceInfo areasSourceInfo, NoDeployType type, CancellationToken ct = default);
 
         /// <summary>
         /// Creates a no-deploy area image designed to be used as an overlay, with areas rendered in red.

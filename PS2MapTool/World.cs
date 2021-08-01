@@ -3,11 +3,19 @@
     public enum World
     {
         Amerish,
-        Desolation,
+
+        /// <summary>
+        /// Desolation
+        /// </summary>
+        OutfitWars,
         Esamir,
         Hossin,
         Indar,
-        Koltyr,
+
+        /// <summary>
+        /// Koltyr
+        /// </summary>
+        Quickload,
         Nexus,
         Sanctuary,
         Tutorial,

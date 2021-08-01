@@ -20,8 +20,8 @@ namespace PS2MapTool.Cli.Commands
     public class StitchCommand : ICommand
     {
         private readonly Stopwatch _stopwatch;
+        private readonly ParallelTaskRunner _taskRunner;
 
-        private ParallelTaskRunner _taskRunner;
         private IAnsiConsole _console;
         private CancellationToken _ct;
 
@@ -36,20 +36,21 @@ namespace PS2MapTool.Cli.Commands
         [CommandOption("disable-compression", 'd', Description = "Prevents the stitched map/s from being compressed using OptiPNG. Saves a considerable amount of time at the expense of producing maps 40-50% larger in size.", IsRequired = false)]
         public bool DisableCompression { get; init; }
 
-        [CommandOption("max-parallelism", 'p', Description = "The maximum amount of maps that may be stitched AND compressed in parallel. Lower values use less memory and CPU resouces.", Validators = new Type[] { typeof(MaxParallelValidator) })]
+        [CommandOption("max-parallelism", 'p', Description = "The maximum amount of maps that may be stitched AND compressed in parallel. Lower values use less memory and CPU resources.", Validators = new Type[] { typeof(MaxParallelValidator) })]
         public int MaxParallelism { get; init; }
 
         [CommandOption("worlds", 'w', Description = "Limits map generation to the given worlds.")]
-        public IReadOnlyList<string>? Worlds { get; init; }
+        public IReadOnlyList<World>? Worlds { get; init; }
 
-        [CommandOption("lods", 'l', Description = "Limits map generation to the given LODs", Validators = new Type[] { typeof(LODNumberValidator) })]
-        public IReadOnlyList<int>? Lods { get; init; }
+        [CommandOption("lods", 'l', Description = "Limits map generation to the given LODs")]
+        public IReadOnlyList<Lod>? Lods { get; init; }
 
         #endregion
 
         public StitchCommand()
         {
             _stopwatch = new Stopwatch();
+            _taskRunner = new ParallelTaskRunner();
 
             TilesSource = string.Empty;
             OutputPath = string.Empty;
@@ -78,6 +79,7 @@ namespace PS2MapTool.Cli.Commands
             _stopwatch.Stop();
             _console.WriteLine();
             _console.MarkupLine(Formatter.Success("Completed in " + _stopwatch.Elapsed.ToString(@"hh\h\ mm\m\ ss\s")));
+            _stopwatch.Reset();
         }
 
         private void Setup(IConsole console)
@@ -108,8 +110,7 @@ namespace PS2MapTool.Cli.Commands
 
             _ct = console.RegisterCancellationHandler();
 
-            _taskRunner = new ParallelTaskRunner((e) => console.Error.WriteLine(e));
-            _taskRunner.Start(_ct, MaxParallelism);
+            _taskRunner.Start(_ct, MaxParallelism, (e) => console.Error.WriteLine(e));
         }
 
         /// <summary>
@@ -122,7 +123,7 @@ namespace PS2MapTool.Cli.Commands
             _console.MarkupLine("\t " + Formatter.Success("Done"));
 
             _console.WriteLine("Maps will be generated for:");
-            foreach (string world in bucket.GetWorlds())
+            foreach (World world in bucket.GetWorlds())
                 _console.MarkupLine($"\t{ Formatter.World(world) }: { Formatter.Lod(string.Join(',', bucket.GetLods(world))) }");
 
             _console.WriteLine();
