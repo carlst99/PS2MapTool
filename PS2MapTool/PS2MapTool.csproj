@@ -6,9 +6,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Pfim" Version="0.10.0" />
+    <PackageReference Include="Pfim" Version="0.10.1" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.3" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="optipng.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

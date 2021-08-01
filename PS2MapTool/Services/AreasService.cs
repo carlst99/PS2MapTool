@@ -1,43 +1,31 @@
-﻿using PS2MapTool.Services.Abstractions;
+﻿using PS2MapTool.Areas;
+using PS2MapTool.Services.Abstractions;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
-namespace PS2MapTool.Areas
+namespace PS2MapTool.Services
 {
-    /// <summary>
-    /// Provides functions to get and manipulate no-deploy areas.
-    /// </summary>
-    public class AreaService : IAreaService
+    /// <inheritdoc cref="IAreasService"/>
+    public class AreasService : IAreasService
     {
         /// <summary>
         /// The image size, in pixels, that the area definitions are designed to fit within.
         /// </summary>
         public const int IMAGE_PIXEL_SIZE = 8192;
 
-        private readonly IDataLoaderService _dataLoader;
-
-        /// <summary>
-        /// Initialises a new instance of the <see cref="AreaService"/> object.
-        /// </summary>
-        /// <param name="dataLoader">The <see cref="IDataLoaderService"/> to get areas from.</param>
-        public AreaService(IDataLoaderService dataLoader)
-        {
-            _dataLoader = dataLoader;
-        }
-
         /// <inheritdoc />
-        public async Task<IList<AreaDefinition>> GetNoDeployAreasAsync(World world, NoDeployType type, CancellationToken ct = default)
+        public virtual async Task<IList<AreaDefinition>> GetNoDeployAreasAsync(AreasSourceInfo areasSourceInfo, NoDeployType type, CancellationToken ct = default)
         {
             List<AreaDefinition> areas = new();
             AreaDefinition? lastZone = null;
-            AreasSourceInfo areasInfo = await _dataLoader.GetAreasAsync(world, ct).ConfigureAwait(false);
 
             XmlReaderSettings xmlSettings = new()
             {
@@ -45,7 +33,7 @@ namespace PS2MapTool.Areas
                 CloseInput = false,
                 ConformanceLevel = ConformanceLevel.Fragment // This is required as the area definitions are stored in one file as multiple root-level objects.
             };
-            using XmlReader reader = XmlReader.Create(areasInfo.DataSource, xmlSettings);
+            using XmlReader reader = XmlReader.Create(areasSourceInfo.DataSource, xmlSettings);
 
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
@@ -73,13 +61,15 @@ namespace PS2MapTool.Areas
                 }
             }
 
+            areasSourceInfo.DataSource.Seek(0, System.IO.SeekOrigin.Begin);
+
             return areas;
         }
 
         /// <inheritdoc />
-        public async Task<Image<Rgba32>> CreateNoDeployZoneImageAsync(IEnumerable<AreaDefinition> noDeployZones, Lod lod = Lod.Lod0, CancellationToken ct = default)
+        public virtual async Task<Image<Rgba32>> CreateNoDeployZoneImageAsync(IEnumerable<AreaDefinition> noDeployZones, Lod lod = Lod.Lod0, CancellationToken ct = default)
         {
-            Image<Rgba32> stitchedImage = new(IMAGE_PIXEL_SIZE / GetLodScalar(lod), IMAGE_PIXEL_SIZE / GetLodScalar(lod));
+            Image<Rgba32> ndzImage = new(IMAGE_PIXEL_SIZE / GetLodScalar(lod), IMAGE_PIXEL_SIZE / GetLodScalar(lod));
 
             Task t = new(() =>
             {
@@ -91,15 +81,15 @@ namespace PS2MapTool.Areas
                     AreaDefinition nomalised = NormaliseNoDeployZone(ndz, lod);
                     IPath zonePoly = new EllipsePolygon(nomalised.X, nomalised.Z, nomalised.Radius);
 
-                    stitchedImage.Mutate(x => x.Fill(Color.Red, zonePoly));
+                    ndzImage.Mutate(x => x.Fill(Color.Red, zonePoly));
                 }
 
-                stitchedImage.Mutate(x => x.Rotate(RotateMode.Rotate270));
+                ndzImage.Mutate(x => x.Rotate(RotateMode.Rotate270));
             }, ct, TaskCreationOptions.LongRunning);
             t.Start();
             await t.ConfigureAwait(false);
 
-            return stitchedImage;
+            return ndzImage;
         }
 
         /// <summary>
@@ -108,7 +98,7 @@ namespace PS2MapTool.Areas
         /// <param name="reader">The <see cref="XmlReader"/> to use.</param>
         /// <param name="area">The parsed zone.</param>
         /// <returns>A value indicating if the parse operation completed successfully.</returns>
-        private static bool TryParseNoDeployInfo(XmlReader reader, out AreaDefinition? area)
+        private static bool TryParseNoDeployInfo(XmlReader reader, [NotNullWhen(true)] out AreaDefinition? area)
         {
             area = null;
             string? xVal = reader.GetAttribute("x1");
@@ -164,7 +154,7 @@ namespace PS2MapTool.Areas
         }
 
         /// <summary>
-        /// Normalises the cooridnates of an <see cref="AreaDefinition"/> for use with ImageSharp.
+        /// Normalises the coordinates of an <see cref="AreaDefinition"/> for use with ImageSharp.
         /// </summary>
         /// <param name="area">The <see cref="AreaDefinition"/> to normalise.</param>
         /// <param name="lod">The LOD to scale this <see cref="AreaDefinition"/> for.</param>

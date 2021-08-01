@@ -18,14 +18,15 @@ namespace PS2MapTool.Cli
 
         protected readonly ConcurrentQueue<Task> _taskQueue;
         protected readonly List<Task> _runningTasks;
-        protected readonly Action<AggregateException>? _onTaskException;
+
+        protected Task _taskRunner;
+        protected Action<AggregateException>? _onTaskException;
 
         /// <summary>
         /// Gets the number of currently running tasks. Only update this using volatile operations, such as through the <see cref="Interlocked"/> class.
         /// </summary>
         protected int _runningTaskCount;
 
-        protected Task _taskRunner;
 
         /// <summary>
         /// Gets the number of currently running tasks.
@@ -50,10 +51,8 @@ namespace PS2MapTool.Cli
         /// <summary>
         /// Initializes a new instance of the <see cref="ParallelTaskRunner"/> object.
         /// </summary>
-        public ParallelTaskRunner(Action<AggregateException>? onTaskException = default)
+        public ParallelTaskRunner()
         {
-            _onTaskException = onTaskException;
-
             _taskQueue = new ConcurrentQueue<Task>();
             _runningTasks = new List<Task>();
             _taskRunner = new Task(() => throw new InvalidOperationException("This task runner has not been setup."));
@@ -76,13 +75,14 @@ namespace PS2MapTool.Cli
         /// </summary>
         /// <param name="ct"></param>
         /// <param name="maxParallelTasks">The maximum number of tasks that may be run in parallel.</param>
-        public virtual void Start(CancellationToken ct, int maxParallelTasks = 4)
+        public virtual void Start(CancellationToken ct, int maxParallelTasks = 4, Action<AggregateException>? onTaskException = default)
         {
             if (IsRunning)
                 throw new InvalidOperationException("This instance is already running.");
             if (IsDisposed)
                 throw new ObjectDisposedException(nameof(ParallelTaskRunner));
 
+            _onTaskException = onTaskException;
             ct.Register(() => IsRunning = false);
 
             _taskRunner = new Task(() =>

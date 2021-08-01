@@ -11,16 +11,16 @@ namespace PS2MapTool.Services
     /// <summary>
     /// Provides functions to load mapping data from a directory.
     /// </summary>
-    public sealed class DirectoryDataLoaderService : IDataLoaderService
+    public class DirectoryDataLoaderService : IDataLoaderService
     {
-        private readonly string _directory;
-        private readonly SearchOption _searchOption;
+        protected readonly string _directory;
+        protected readonly SearchOption _searchOption;
 
         /// <summary>
         /// Initialises a new instance of the <see cref="DirectoryDataLoaderService"/> object.
         /// </summary>
-        /// <param name="directory"></param>
-        /// <param name="searchSubdirectories"></param>
+        /// <param name="directory">The directory to search for files in.</param>
+        /// <param name="searchOption">The search option to use.</param>
         public DirectoryDataLoaderService(string directory, SearchOption searchOption)
         {
             _directory = directory;
@@ -28,7 +28,8 @@ namespace PS2MapTool.Services
         }
 
         /// <inheritdoc />
-        public IEnumerable<TileInfo> GetTiles(World world, Lod lod, CancellationToken ct = default)
+        /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
+        public virtual IEnumerable<TileInfo> GetTiles(World world, Lod lod, CancellationToken ct = default)
         {
             if (!Directory.Exists(_directory))
                 throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
@@ -38,27 +39,23 @@ namespace PS2MapTool.Services
                 MatchCasing = MatchCasing.CaseInsensitive,
                 RecurseSubdirectories = _searchOption == SearchOption.AllDirectories
             };
-            string searchPattern = world.ToString() + "_Tile_???_???_" + lod.ToString();
+            string searchPattern = world.ToString() + $"_Tile_???_???_{lod}.*";
 
             foreach (string path in Directory.EnumerateFiles(_directory, searchPattern, enumerationOptions))
             {
                 FileStream fs = new(path, FileMode.Open, FileAccess.Read);
 
                 if (TileInfo.TryParse(Path.GetFileNameWithoutExtension(path), fs, out TileInfo? tile))
-                {
-#pragma warning disable CS8603 // Possible null reference return.
                     yield return tile;
-                }
-#pragma warning restore CS8603 // Possible null reference return.
                 else
-                {
                     fs.Dispose();
-                }
             }
         }
 
         /// <inheritdoc />
-        public async Task<AreasSourceInfo> GetAreasAsync(World world, CancellationToken ct = default)
+        /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
+        /// <exception cref="FileNotFoundException">Thrown when an areas file could not be found.</exception>
+        public virtual async Task<AreasSourceInfo> GetAreasAsync(World world, CancellationToken ct = default)
         {
             if (!Directory.Exists(_directory))
                 throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
@@ -88,7 +85,7 @@ namespace PS2MapTool.Services
         }
 
         /// <summary>
-        /// Recursively searches a directory, and all subdirectories, for a file.
+        /// Recursively searches a directory, and all subdirectories, for a file. Faster than searching for a pattern as not all files are enumeration.
         /// </summary>
         /// <param name="fileName">The name of the file to find (including the extension).</param>
         /// <param name="directory">The root directory to search.</param>

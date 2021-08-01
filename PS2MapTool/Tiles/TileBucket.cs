@@ -1,67 +1,62 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
-namespace PS2MapTool.Cli.Models
+namespace PS2MapTool.Tiles
 {
-    public class WorldLodBucket
+    /// <summary>
+    /// A dictionary wrapper for storing map tiles.
+    /// </summary>
+    public class TileBucket
     {
-        private readonly Dictionary<string, Dictionary<string, List<Tile>>> _lodBucket;
-        private readonly IEnumerable<string>? _worldsToIgnore;
-        private readonly IEnumerable<string>? _lodsToIgnore;
+        private readonly Dictionary<World, Dictionary<Lod, List<TileInfo>>> _lodBucket;
 
         /// <summary>
         /// Initialises a new instance of the <see cref="WorldLodBucket"/> object.
         /// </summary>
-        /// <param name="worlds">Only allows tiles for these worlds to be added.</param>
-        /// <param name="lods">Only allows tiles for these LODs to be added.</param>
-        public WorldLodBucket(IEnumerable<string>? worlds = null, IEnumerable<string>? lods = null)
+        public TileBucket()
         {
-            _worldsToIgnore = worlds;
-            _lodsToIgnore = lods;
-
-            _lodBucket = new Dictionary<string, Dictionary<string, List<Tile>>>();
+            _lodBucket = new Dictionary<World, Dictionary<Lod, List<TileInfo>>>();
         }
 
         /// <summary>
         /// Adds a tile to the bucket.
         /// </summary>
         /// <param name="tile">The tile to add.</param>
-        /// <returns>A value indicating if the tile was added.</returns>
-        public bool AddLodTile(Tile tile)
+        public void AddTile(TileInfo tile)
         {
-            // Discard the tile if we shouldn't be generating maps for its world
-            if (_worldsToIgnore?.Contains(tile.World) == false)
-                return false;
-
-            // Discard the tile if we shouldn't be generating maps for its LOD
-            if (_lodsToIgnore?.Contains(tile.Lod) == false)
-                return false;
-
             // Ensure that the LOD bucket exists for this world
             if (!_lodBucket.ContainsKey(tile.World))
-                _lodBucket[tile.World] = new Dictionary<string, List<Tile>>();
+                _lodBucket[tile.World] = new Dictionary<Lod, List<TileInfo>>();
 
             // Ensure that the tile bucket exists for this LOD
             if (!_lodBucket[tile.World].ContainsKey(tile.Lod))
-                _lodBucket[tile.World][tile.Lod] = new List<Tile>();
+                _lodBucket[tile.World][tile.Lod] = new List<TileInfo>();
 
             _lodBucket[tile.World][tile.Lod].Add(tile);
-            return true;
+        }
+
+        /// <summary>
+        /// Adds multiple tiles to the bucket.
+        /// </summary>
+        /// <param name="tiles">The tiles to add.</param>
+        public void AddTiles(IEnumerable<TileInfo> tiles)
+        {
+            foreach (TileInfo tile in tiles)
+                AddTile(tile);
         }
 
         /// <summary>
         /// Gets all the worlds that this bucket is storing tiles of.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<string> GetWorlds() => _lodBucket.Keys;
+        public IEnumerable<World> GetWorlds() => _lodBucket.Keys;
 
         /// <summary>
         /// Gets all the LODs for a world that this bucket is storing tiles of.
         /// </summary>
         /// <param name="world">The world to get the LODs of.</param>
         /// <returns></returns>
-        public IEnumerable<string> GetLods(string world) => _lodBucket[world].Keys;
+        public IEnumerable<Lod> GetLods(World world) => _lodBucket[world].Keys;
 
         /// <summary>
         /// Gets the stored tiles for a particular world/LOD.
@@ -69,7 +64,7 @@ namespace PS2MapTool.Cli.Models
         /// <param name="world">The world to get tiles for.</param>
         /// <param name="lod">The LOD of the world to get tiles for."/></param>
         /// <returns></returns>
-        public IEnumerable<Tile> GetTiles(string world, string lod)
+        public List<TileInfo> GetTiles(World world, Lod lod)
         {
             if (!_lodBucket.ContainsKey(world))
                 throw new ArgumentException("No tiles for that world have been stored in this bucket.", nameof(world));

@@ -18,7 +18,7 @@ namespace PS2MapTool.Services
         /// <exception cref="OptiPngNotFoundException">Thrown when the OptiPNG binary cannot be found.</exception>
         /// <exception cref="FileNotFoundException">Thrown when the file to compress cannot be found.</exception>
         /// <exception cref="OptiPngException">Thrown when an error occurs with the OptiPNG process.</exception>
-        public async Task CompressAsync(string filePath, CancellationToken ct = default)
+        public virtual Task CompressAsync(string filePath, CancellationToken ct = default)
         {
             if (!File.Exists(OPTIPNG_FILE_NAME))
                 throw new OptiPngNotFoundException();
@@ -26,7 +26,7 @@ namespace PS2MapTool.Services
             if (!File.Exists(filePath))
                 throw new FileNotFoundException("Could not find the file to compress", filePath);
 
-            Process? process = Process.Start(new ProcessStartInfo(OPTIPNG_FILE_NAME, filePath)
+            Process? process = Process.Start(new ProcessStartInfo(OPTIPNG_FILE_NAME, $"-o3 {filePath}")
             {
                 CreateNoWindow = true,
                 RedirectStandardError = true
@@ -35,14 +35,9 @@ namespace PS2MapTool.Services
             if (process is null)
                 throw new OptiPngException("Could not start OptiPNG process");
 
-            // OptiPNG outputs to stderr, and also seems to use a 'starter process', resulting in Process.HasExited being set initially. Waiting for output solves this.
-            bool canWait = false;
-            process.BeginErrorReadLine();
-            process.ErrorDataReceived += (_, __) => canWait = true;
-            while (!canWait)
-                await Task.Delay(100, ct).ConfigureAwait(false);
-
-            await process.WaitForExitAsync(ct).ConfigureAwait(false);
+            // TODO: For unknown reasons, asynchronous tasks at this point seem to fail silently.
+            process.WaitForExit();
+            return Task.CompletedTask;
         }
     }
 }
