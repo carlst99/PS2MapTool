@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
 
 namespace PS2MapTool.Tiles
 {
@@ -10,11 +9,6 @@ namespace PS2MapTool.Tiles
     /// </summary>
     public record TileInfo : IDisposable
     {
-        /// <summary>
-        /// The file extension for raw tiles.
-        /// </summary>
-        // public const string TILE_EXTENSION = ".dds"; // This is now obsolete, knowing that tiles can DDS or PNG
-
         /// <summary>
         /// The data source.
         /// </summary>
