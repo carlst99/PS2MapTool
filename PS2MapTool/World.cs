@@ -1,24 +1,45 @@
-﻿using System.ComponentModel;
-
-namespace PS2MapTool
+﻿namespace PS2MapTool
 {
+    /// <summary>
+    /// Defines worlds as represented within the game assets.
+    /// </summary>
     public enum World
     {
         Amerish,
 
         /// <summary>
-        /// Desolation
+        /// PSArena map
         /// </summary>
-        OutfitWars,
+        AmerishBR,
+
+        /// <summary>
+        /// PSArena map
+        /// </summary>
+        Arena_02,
         Esamir,
+
+        /// <summary>
+        /// PSArena map
+        /// </summary>
+        Exodus,
         Hossin,
         Indar,
+
+        /// <summary>
+        /// Unfinished two-faction head to head map, intended for outfit vs. outfit competitive play.
+        /// </summary>
+        Nexus,
+
+        /// <summary>
+        /// Desolation; the Outfit Wars map
+        /// </summary>
+        OutfitWars,
 
         /// <summary>
         /// Koltyr
         /// </summary>
         Quickload,
-        Nexus,
+
         Sanctuary,
         Tutorial,
         VR
