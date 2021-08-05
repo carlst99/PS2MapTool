@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 
 namespace PS2MapTool.Services
 {
-    /// <inheritdoc cref="ITileProcessorService" />
-    public class PngTileProcessorService : ITileProcessorService
+    /// <inheritdoc cref="ITileLoaderService" />
+    public class PngTileLoaderService : ITileLoaderService
     {
         public static readonly byte[] PNG_MAGIC_ID = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 

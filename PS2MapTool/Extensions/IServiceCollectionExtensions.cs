@@ -17,13 +17,13 @@ namespace Microsoft.Extensions.DependencyInjection
                     .AddSingleton<IImageCompressionService, IImageCompressionService>()
                     .AddSingleton<IImageStitchService, ImageStitchService>();
 
-            services.AddSingleton<DdsTileProcessorService>();
-            services.AddSingleton<PngTileProcessorService>()
+            services.AddSingleton<DdsTileLoaderService>();
+            services.AddSingleton<PngTileLoaderService>()
                     .AddSingleton(s =>
             {
-                TileProcessorServiceRepository repo = new();
-                repo.Add(s.GetRequiredService<DdsTileProcessorService>());
-                repo.Add(s.GetRequiredService<PngTileProcessorService>());
+                TileLoaderServiceRepository repo = new();
+                repo.Add(s.GetRequiredService<DdsTileLoaderService>());
+                repo.Add(s.GetRequiredService<PngTileLoaderService>());
                 return repo;
             });
 

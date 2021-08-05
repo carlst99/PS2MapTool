@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 
 namespace PS2MapTool.Services
 {
-    /// <inheritdoc cref="DdsTileProcessorService"/>
-    public class DdsTileProcessorService : ITileProcessorService
+    /// <inheritdoc cref="DdsTileLoaderService"/>
+    public class DdsTileLoaderService : ITileLoaderService
     {
         public static readonly byte[] DDS_MAGIC_ID = new byte[] { 0x44, 0x44, 0x53, 0x20 };
 

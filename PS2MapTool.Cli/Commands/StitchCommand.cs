@@ -58,9 +58,9 @@ namespace PS2MapTool.Cli.Commands
             _taskRunner = new ParallelTaskRunner();
             _compressionService = new OptiPngCompressionService();
 
-            TileProcessorServiceRepository repo = new();
-            repo.Add(new DdsTileProcessorService());
-            repo.Add(new PngTileProcessorService());
+            TileLoaderServiceRepository repo = new();
+            repo.Add(new DdsTileLoaderService());
+            repo.Add(new PngTileLoaderService());
             _imageStitchService = new ImageStitchService(repo);
 
             TilesSource = string.Empty;

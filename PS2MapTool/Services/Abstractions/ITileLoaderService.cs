@@ -8,10 +8,10 @@ namespace PS2MapTool.Services.Abstractions
     /// <summary>
     /// Defines a service used to load tile data into a usable format.
     /// </summary>
-    public interface ITileProcessorService
+    public interface ITileLoaderService
     {
         /// <summary>
-        /// Gets a value indicating whether or not this <see cref="ITileProcessorService"/> can load the given type of tile.
+        /// Gets a value indicating whether or not this <see cref="ITileLoaderService"/> can load the given type of tile.
         /// </summary>
         /// <param name="tileSource">The tile data source.</param>
         bool CanLoad(Stream tileSource);
