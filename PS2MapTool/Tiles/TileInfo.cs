@@ -71,22 +71,26 @@ namespace PS2MapTool.Tiles
             tile = null;
             string[] nameComponents = tileName.Split('_');
 
-            if (nameComponents.Length != 5)
+            int tileComponentIndex = Array.IndexOf(nameComponents, "Tile");
+            if (tileComponentIndex == -1)
                 return false;
 
-            if (!Enum.TryParse(nameComponents[0], true, out World world))
+            if (nameComponents.Length != 4 + tileComponentIndex)
                 return false;
 
-            if (nameComponents[1] != "Tile")
+            if (!Enum.TryParse(string.Join('_', nameComponents[0..(tileComponentIndex)]), true, out World world))
                 return false;
 
-            if (!int.TryParse(nameComponents[2], out int x))
+            if (nameComponents[tileComponentIndex++] != "Tile")
                 return false;
 
-            if (!int.TryParse(nameComponents[3], out int y))
+            if (!int.TryParse(nameComponents[tileComponentIndex++], out int x))
                 return false;
 
-            if (!Enum.TryParse(nameComponents[4], true, out Lod lod))
+            if (!int.TryParse(nameComponents[tileComponentIndex++], out int y))
+                return false;
+
+            if (!Enum.TryParse(nameComponents[tileComponentIndex++], true, out Lod lod))
                 return false;
 
             tile = new TileInfo(world, x, y, lod, dataSource);

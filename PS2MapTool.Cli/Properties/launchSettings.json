@@ -2,7 +2,7 @@
   "profiles": {
     "PS2MapBuilder": {
       "commandName": "Project",
-      "commandLineArgs": "stitch C:\\Users\\carls\\source\\repos\\_PS2Modding\\_External\\forgelight-toolbox_inUse\\FLUtils\\Unpacked\\Amerish -w Amerish -l 3"
+      "commandLineArgs": "stitch C:\\Users\\carls\\source\\repos\\_PS2Modding\\_External\\forgelight-toolbox_inUse\\FLUtils\\Unpacked\\Amerish -w Amerish -l 2"
     }
   }
 }
