@@ -35,6 +35,11 @@ namespace PS2MapTool.Tiles
         public Lod Lod { get; init; }
 
         /// <summary>
+        /// Gets the extension of the file this tile was saved in.
+        /// </summary>
+        public string? FileExtension { get; init; }
+
+        /// <summary>
         /// Gets a value indicating if this <see cref="TileInfo"/> object has been disposed.
         /// </summary>
         public bool IsDisposed { get; protected set; }
@@ -47,7 +52,7 @@ namespace PS2MapTool.Tiles
         /// <param name="y">The Y coordinate of the tile.</param>
         /// <param name="lod">The level of detail that this tile is for.</param>
         /// <param name="dataSource">The data source.</param>
-        public TileInfo(World world, int x, int y, Lod lod, Stream dataSource)
+        public TileInfo(World world, int x, int y, Lod lod, Stream dataSource, string? fileExtension = null)
         {
             World = world;
             X = x;
@@ -68,8 +73,14 @@ namespace PS2MapTool.Tiles
             if (!dataSource.CanSeek)
                 throw new ArgumentException("The data stream must be able to seek", nameof(dataSource));
 
+            // Get the extension, if available
+            string? fileExtension = null;
+            string[] extensionComponents = tileName.Split('.');
+            if (extensionComponents.Length == 2)
+                fileExtension = extensionComponents[1];
+
             tile = null;
-            string[] nameComponents = tileName.Split('_');
+            string[] nameComponents = extensionComponents[0].Split('_');
 
             int tileComponentIndex = Array.IndexOf(nameComponents, "Tile");
             if (tileComponentIndex == -1)
@@ -93,7 +104,7 @@ namespace PS2MapTool.Tiles
             if (!Enum.TryParse(nameComponents[tileComponentIndex++], true, out Lod lod))
                 return false;
 
-            tile = new TileInfo(world, x, y, lod, dataSource);
+            tile = new TileInfo(world, x, y, lod, dataSource, fileExtension);
 
             return true;
         }

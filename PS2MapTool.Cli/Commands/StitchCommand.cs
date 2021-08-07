@@ -72,12 +72,11 @@ namespace PS2MapTool.Cli.Commands
         {
             Setup(console);
 
-            _stopwatch.Start();
-
             TileBucket? tileBucket = GetTileBucket();
             if (tileBucket is null)
                 return;
 
+            _stopwatch.Start();
             foreach (World world in tileBucket.GetWorlds())
             {
                 foreach (Lod lod in tileBucket.GetLods(world))
@@ -118,7 +117,7 @@ namespace PS2MapTool.Cli.Commands
             _taskRunner.Stop();
 
             _console.WriteLine();
-            _console.MarkupLine(Formatter.Success("Completed in " + _stopwatch.Elapsed.ToString(@"hh\h\ mm\m\ ss\s")));
+            _console.MarkupLine(Formatter.Success("Completed in " + _stopwatch.Elapsed/*.ToString(@"hh\h\ mm\m\ ss\s")*/));
             _stopwatch.Reset();
         }
 

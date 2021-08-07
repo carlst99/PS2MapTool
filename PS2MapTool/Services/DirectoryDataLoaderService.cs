@@ -45,7 +45,7 @@ namespace PS2MapTool.Services
             {
                 FileStream fs = new(path, FileMode.Open, FileAccess.Read);
 
-                if (TileInfo.TryParse(Path.GetFileNameWithoutExtension(path), fs, out TileInfo? tile))
+                if (TileInfo.TryParse(Path.GetFileName(path), fs, out TileInfo? tile))
                     yield return tile;
                 else
                     fs.Dispose();
