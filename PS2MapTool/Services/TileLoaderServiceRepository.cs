@@ -1,7 +1,7 @@
 ﻿using PS2MapTool.Services.Abstractions;
+using PS2MapTool.Tiles;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 
 namespace PS2MapTool.Services
 {
@@ -25,11 +25,11 @@ namespace PS2MapTool.Services
         /// <param name="tileDataSource">The tile data to load.</param>
         /// <param name="tileLoaderService">The resolved processor service.</param>
         /// <returns>A value indicating if a processor service was found.</returns>
-        public bool TryGet(Stream tileDataSource, [NotNullWhen(true)] out ITileLoaderService? tileLoaderService)
+        public bool TryGet(TileInfo tile, [NotNullWhen(true)] out ITileLoaderService? tileLoaderService)
         {
             foreach (ITileLoaderService loader in _repository)
             {
-                if (loader.CanLoad(tileDataSource))
+                if (loader.CanLoad(tile))
                 {
                     tileLoaderService = loader;
                     return true;

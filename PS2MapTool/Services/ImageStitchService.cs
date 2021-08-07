@@ -48,10 +48,10 @@ namespace PS2MapTool.Services
             int x = 0, y = 0;
             foreach (TileInfo tile in orderedBucket)
             {
-                if (!_tileProcessorRepository.TryGet(tile.DataSource, out ITileLoaderService? loader))
+                if (!_tileProcessorRepository.TryGet(tile, out ITileLoaderService? loader))
                     throw new Exception($"The tile {tile.World}Tile__{tile.X}_{tile.Y}_{tile.Lod} is an unknown image format.");
 
-                using Image tileImage = await loader.LoadAsync(tile.DataSource, ct).ConfigureAwait(false);
+                Image tileImage = await loader.LoadAsync(tile, ct).ConfigureAwait(false);
                 tileImage.Mutate(o => o.Flip(FlipMode.Vertical));
 
                 stitchedImage.Mutate(o => o.DrawImage(tileImage, new Point(x, y), 1f));
@@ -62,6 +62,8 @@ namespace PS2MapTool.Services
                     x = 0;
                     y += TILE_SIZE;
                 }
+
+                tileImage.Dispose();
 
                 if (ct.IsCancellationRequested)
                     throw new TaskCanceledException();
