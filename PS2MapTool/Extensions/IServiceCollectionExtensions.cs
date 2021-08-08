@@ -1,4 +1,5 @@
-﻿using PS2MapTool.Services;
+﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+using PS2MapTool.Services;
 using PS2MapTool.Services.Abstractions;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -12,14 +13,14 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>An <see cref="IServiceCollection"/> so that calls may be chained.</returns>
         public static IServiceCollection AddPS2MapToolServices(this IServiceCollection services)
         {
-            services.AddSingleton<IAreasService, AreasService>()
-                    .AddSingleton<IDataLoaderService, DirectoryDataLoaderService>()
-                    .AddSingleton<IImageCompressionService, IImageCompressionService>()
-                    .AddSingleton<IImageStitchService, ImageStitchService>();
+            services.TryAddSingleton<IAreasService, AreasService>();
+            services.TryAddSingleton<IDataLoaderService, DirectoryDataLoaderService>();
+            services.TryAddSingleton<IImageCompressionService, IImageCompressionService>();
+            services.TryAddSingleton<IImageStitchService, ImageStitchService>();
 
-            services.AddSingleton<DdsTileLoaderService>();
-            services.AddSingleton<PngTileLoaderService>()
-                    .AddSingleton(s =>
+            services.TryAddSingleton<DdsTileLoaderService>();
+            services.TryAddSingleton<PngTileLoaderService>();
+            services.TryAddSingleton(s =>
             {
                 TileLoaderServiceRepository repo = new();
                 repo.Add(s.GetRequiredService<DdsTileLoaderService>());
