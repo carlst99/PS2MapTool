@@ -53,7 +53,7 @@ namespace PS2MapTool.Services
             int tightStride = image.Width * image.BitsPerPixel / 8;
             if (image.Stride != tightStride)
             {
-                newData = allocator.Rent(image.Height * tightStride); //new byte[image.Height * tightStride];
+                newData = new byte[image.Height * tightStride];
                 for (int i = 0; i < image.Height; i++)
                 {
                     if (ct.IsCancellationRequested)
