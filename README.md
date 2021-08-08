@@ -18,7 +18,7 @@ A tool to create PlanetSide 2 continent maps from the data stored in the game as
 
 3. If you want to place the binaries in a different location, make sure you shift any other files in the directory along with them.
 
-4. :warning: See [Map Data Extraction](#map-asset-extraction)
+4. :warning: See [Map Asset Extraction](#map-asset-extraction)
 
 ### Map Asset Extraction
 
