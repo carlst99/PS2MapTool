@@ -1,9 +1,9 @@
 ﻿namespace PS2MapTool
 {
     /// <summary>
-    /// Defines worlds as represented within the game assets.
+    /// Defines zones as represented within the game assets.
     /// </summary>
-    public enum World
+    public enum AssetZone
     {
         Amerish,
 

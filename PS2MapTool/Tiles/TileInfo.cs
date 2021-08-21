@@ -17,7 +17,7 @@ namespace PS2MapTool.Tiles
         /// <summary>
         /// The world that this tile belongs to.
         /// </summary>
-        public World World { get; init; }
+        public AssetZone World { get; init; }
 
         /// <summary>
         /// The X coordinate of the tile.
@@ -52,7 +52,7 @@ namespace PS2MapTool.Tiles
         /// <param name="y">The Y coordinate of the tile.</param>
         /// <param name="lod">The level of detail that this tile is for.</param>
         /// <param name="dataSource">The data source.</param>
-        public TileInfo(World world, int x, int y, Lod lod, Stream dataSource, string? fileExtension = null)
+        public TileInfo(AssetZone world, int x, int y, Lod lod, Stream dataSource, string? fileExtension = null)
         {
             World = world;
             X = x;
@@ -89,7 +89,7 @@ namespace PS2MapTool.Tiles
             if (nameComponents.Length != 4 + tileComponentIndex)
                 return false;
 
-            if (!Enum.TryParse(string.Join('_', nameComponents[0..(tileComponentIndex)]), true, out World world))
+            if (!Enum.TryParse(string.Join('_', nameComponents[0..(tileComponentIndex)]), true, out AssetZone world))
                 return false;
 
             if (nameComponents[tileComponentIndex++] != "Tile")

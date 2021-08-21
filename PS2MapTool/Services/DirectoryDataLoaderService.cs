@@ -29,7 +29,7 @@ namespace PS2MapTool.Services
 
         /// <inheritdoc />
         /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
-        public virtual IEnumerable<TileInfo> GetTiles(World world, Lod lod, CancellationToken ct = default)
+        public virtual IEnumerable<TileInfo> GetTiles(AssetZone world, Lod lod, CancellationToken ct = default)
         {
             if (!Directory.Exists(_directory))
                 throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
@@ -55,7 +55,7 @@ namespace PS2MapTool.Services
         /// <inheritdoc />
         /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
         /// <exception cref="FileNotFoundException">Thrown when an areas file could not be found.</exception>
-        public virtual async Task<AreasSourceInfo> GetAreasAsync(World world, CancellationToken ct = default)
+        public virtual async Task<AreasSourceInfo> GetAreasAsync(AssetZone world, CancellationToken ct = default)
         {
             if (!Directory.Exists(_directory))
                 throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);

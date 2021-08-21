@@ -11,7 +11,7 @@ namespace PS2MapTool.Areas
         /// <summary>
         /// The world of the areas.
         /// </summary>
-        public World World { get; init; }
+        public AssetZone World { get; init; }
 
         /// <summary>
         /// The data source.
@@ -28,7 +28,7 @@ namespace PS2MapTool.Areas
         /// </summary>
         /// <param name="world">The world of the areas.</param>
         /// <param name="dataSource">The data source.</param>
-        public AreasSourceInfo(World world, Stream dataSource)
+        public AreasSourceInfo(AssetZone world, Stream dataSource)
         {
             World = world;
             DataSource = dataSource;

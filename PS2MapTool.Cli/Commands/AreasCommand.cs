@@ -35,7 +35,7 @@ namespace PS2MapTool.Cli.Commands
         public string OutputPath { get; set; }
 
         [CommandOption("worlds", 'w', Description = "Limits no-deploy-zone generation to the given worlds.")]
-        public IReadOnlyList<World>? Worlds { get; set; }
+        public IReadOnlyList<AssetZone>? Worlds { get; set; }
 
         [CommandOption("lods", 'l', Description = "Limits no-deploy-zone generation to the given LODs.")]
         public IReadOnlyList<Lod>? Lods { get; set; }
@@ -59,7 +59,7 @@ namespace PS2MapTool.Cli.Commands
             Setup(console);
             _stopwatch.Start();
 
-            foreach (World world in Worlds!)
+            foreach (AssetZone world in Worlds!)
             {
                 AreasSourceInfo? areasSourceInfo = null;
                 try
@@ -125,7 +125,7 @@ namespace PS2MapTool.Cli.Commands
             _ct = console.RegisterCancellationHandler();
             _dataLoaderService = new DirectoryDataLoaderService(AreasFileSource, SearchOption.AllDirectories);
 
-            Worlds ??= Enum.GetValues<World>();
+            Worlds ??= Enum.GetValues<AssetZone>();
             Lods ??= Enum.GetValues<Lod>();
             NoDeployTypes ??= Enum.GetValues<NoDeployType>();
 

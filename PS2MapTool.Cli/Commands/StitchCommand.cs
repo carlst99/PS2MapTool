@@ -45,7 +45,7 @@ namespace PS2MapTool.Cli.Commands
         public int MaxParallelism { get; init; }
 
         [CommandOption("worlds", 'w', Description = "Limits map generation to the given worlds.")]
-        public IReadOnlyList<World>? Worlds { get; set; }
+        public IReadOnlyList<AssetZone>? Worlds { get; set; }
 
         [CommandOption("lods", 'l', Description = "Limits map generation to the given LODs")]
         public IReadOnlyList<Lod>? Lods { get; set; }
@@ -77,7 +77,7 @@ namespace PS2MapTool.Cli.Commands
                 return;
 
             _stopwatch.Start();
-            foreach (World world in tileBucket.GetWorlds())
+            foreach (AssetZone world in tileBucket.GetWorlds())
             {
                 foreach (Lod lod in tileBucket.GetLods(world))
                 {
@@ -145,7 +145,7 @@ namespace PS2MapTool.Cli.Commands
             _ct = console.RegisterCancellationHandler();
             _dataLoader = new DirectoryDataLoaderService(TilesSource, SearchOption.AllDirectories);
 
-            Worlds ??= Enum.GetValues<World>();
+            Worlds ??= Enum.GetValues<AssetZone>();
             Lods ??= Enum.GetValues<Lod>();
 
             _console = AnsiConsole.Create(new AnsiConsoleSettings
@@ -164,7 +164,7 @@ namespace PS2MapTool.Cli.Commands
             _console.Write("Generating tile buckets...");
             TileBucket bucket = new();
 
-            foreach (World w in Worlds!)
+            foreach (AssetZone w in Worlds!)
             {
                 foreach (Lod l in Lods!)
                 {
@@ -175,7 +175,7 @@ namespace PS2MapTool.Cli.Commands
             _console.MarkupLine("\t " + Formatter.Success("Done"));
 
             _console.WriteLine("Maps will be generated for:");
-            foreach (World world in bucket.GetWorlds())
+            foreach (AssetZone world in bucket.GetWorlds())
                 _console.MarkupLine($"\t{ Formatter.World(world) }: { Formatter.Lod(string.Join(',', bucket.GetLods(world))) }");
 
             _console.WriteLine();

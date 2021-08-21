@@ -26,13 +26,13 @@ namespace PS2MapTool.Services
         }
 
         /// <inheritdoc />
-        public virtual IEnumerable<TileInfo> GetTiles(World world, Lod lod, CancellationToken ct = default)
+        public virtual IEnumerable<TileInfo> GetTiles(AssetZone world, Lod lod, CancellationToken ct = default)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc />
-        public virtual Task<AreasSourceInfo> GetAreasAsync(World world, CancellationToken ct = default)
+        public virtual Task<AreasSourceInfo> GetAreasAsync(AssetZone world, CancellationToken ct = default)
         {
             throw new NotImplementedException();
         }

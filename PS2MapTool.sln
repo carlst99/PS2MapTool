@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PS2MapTool.Cli", "PS2MapToo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PS2MapTool", "PS2MapTool\PS2MapTool.csproj", "{BA9B0BA9-FD1B-41BB-B094-D7BCDB8D7689}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PS2MapTool.Census", "PS2MapTool.Census\PS2MapTool.Census.csproj", "{60309FD6-DEC2-4196-8C67-4B76AE02DA5F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,14 @@ Global
 		{BA9B0BA9-FD1B-41BB-B094-D7BCDB8D7689}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BA9B0BA9-FD1B-41BB-B094-D7BCDB8D7689}.Release|x64.ActiveCfg = Release|Any CPU
 		{BA9B0BA9-FD1B-41BB-B094-D7BCDB8D7689}.Release|x64.Build.0 = Release|Any CPU
+		{60309FD6-DEC2-4196-8C67-4B76AE02DA5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60309FD6-DEC2-4196-8C67-4B76AE02DA5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60309FD6-DEC2-4196-8C67-4B76AE02DA5F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{60309FD6-DEC2-4196-8C67-4B76AE02DA5F}.Debug|x64.Build.0 = Debug|Any CPU
+		{60309FD6-DEC2-4196-8C67-4B76AE02DA5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60309FD6-DEC2-4196-8C67-4B76AE02DA5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60309FD6-DEC2-4196-8C67-4B76AE02DA5F}.Release|x64.ActiveCfg = Release|Any CPU
+		{60309FD6-DEC2-4196-8C67-4B76AE02DA5F}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
