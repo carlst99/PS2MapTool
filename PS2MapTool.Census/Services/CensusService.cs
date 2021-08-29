@@ -8,42 +8,56 @@ using System.Threading.Tasks;
 
 namespace PS2MapTool.Census.Services
 {
+    /// <inheritdoc cref="ICensusService"/>
     public class CensusService : ICensusService
     {
-        private const uint PAGE_LIMIT = 500;
+        /// <summary>
+        /// The maximum number of elements to return with each query.
+        /// </summary>
+        protected const uint PAGE_LIMIT = 500;
 
-        private readonly IQueryService _queryService;
+        protected readonly IQueryService _queryService;
 
+        /// <summary>
+        /// Initialises a new instance of the <see cref="CensusService"/> class.
+        /// </summary>
+        /// <param name="queryService">The query service.</param>
         public CensusService(IQueryService queryService)
         {
             _queryService = queryService;
         }
 
-        public async Task<List<LatticeLink>> GetLatticeLinksAsync(CancellationToken ct = default)
+        /// <inheritdoc />
+        public virtual async Task<List<LatticeLink>> GetLatticeLinksAsync(CensusZone zone, CancellationToken ct = default)
         {
             IQueryBuilder query = _queryService.CreateQuery()
-                .OnCollection("facility_link");
+                .OnCollection("facility_link")
+                .Where("zone_id", SearchModifier.Equals, (int)zone);
 
             return await GetEntireCollection<LatticeLink>(query, ct).ConfigureAwait(false);
         }
 
-        public async Task<List<MapHex>> GetMapHexesAsync(CancellationToken ct = default)
+        /// <inheritdoc />
+        public virtual async Task<List<MapHex>> GetMapHexesAsync(CensusZone zone, CancellationToken ct = default)
         {
             IQueryBuilder query = _queryService.CreateQuery()
-                .OnCollection("map_hex");
+                .OnCollection("map_hex")
+                .Where("zone_id", SearchModifier.Equals, (int)zone);
 
             return await GetEntireCollection<MapHex>(query, ct).ConfigureAwait(false);
         }
 
-        public async Task<List<MapRegion>> GetMapRegionsAsync(CancellationToken ct = default)
+        ]/// <inheritdoc />
+        public virtual async Task<List<MapRegion>> GetMapRegionsAsync(CensusZone zone, CancellationToken ct = default)
         {
             IQueryBuilder query = _queryService.CreateQuery()
-                .OnCollection("map_region");
+                .OnCollection("map_region")
+                .Where("zone_id", SearchModifier.Equals, (int)zone);
 
             return await GetEntireCollection<MapRegion>(query, ct).ConfigureAwait(false);
         }
 
-        private async Task<List<T>> GetEntireCollection<T>(IQueryBuilder query, CancellationToken ct = default)
+        protected async Task<List<T>> GetEntireCollection<T>(IQueryBuilder query, CancellationToken ct = default)
         {
             List<T> elements = new();
             uint startAt = 0;

@@ -7,7 +7,7 @@ namespace Microsoft.Extensions.DependencyInjection
     public static class IServiceCollectionExtensions
     {
         /// <summary>
-        /// Adds components required to use the map tool services to the container.
+        /// Adds components that enable the use of asset-based map tools.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
         /// <returns>An <see cref="IServiceCollection"/> so that calls may be chained.</returns>
