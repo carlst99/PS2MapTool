@@ -11,7 +11,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
         /// <returns>An <see cref="IServiceCollection"/> so that calls may be chained.</returns>
-        public static IServiceCollection AddPS2MapToolServices(this IServiceCollection services)
+        public static IServiceCollection AddAssetMappingServices(this IServiceCollection services)
         {
             services.TryAddSingleton<IAreasService, AreasService>();
             services.TryAddSingleton<IDataLoaderService, DirectoryDataLoaderService>();
