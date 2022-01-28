@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="carlst99.Mandible" Version="1.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
     <PackageReference Include="Pfim" Version="0.10.3" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
@@ -11,6 +12,10 @@
     <None Update="optipng.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Abstractions\Services\" />
   </ItemGroup>
 
 </Project>

@@ -17,7 +17,7 @@ public record TileInfo : IDisposable
     /// <summary>
     /// The world that this tile belongs to.
     /// </summary>
-    public AssetZone World { get; init; }
+    public string World { get; init; }
 
     /// <summary>
     /// The X coordinate of the tile.
@@ -37,7 +37,7 @@ public record TileInfo : IDisposable
     /// <summary>
     /// Gets the extension of the file this tile was saved in.
     /// </summary>
-    public string? FileExtension { get; init; }
+    public string FileExtension { get; init; }
 
     /// <summary>
     /// Gets a value indicating if this <see cref="TileInfo"/> object has been disposed.
@@ -52,13 +52,14 @@ public record TileInfo : IDisposable
     /// <param name="y">The Y coordinate of the tile.</param>
     /// <param name="lod">The level of detail that this tile is for.</param>
     /// <param name="dataSource">The data source.</param>
-    public TileInfo(AssetZone world, int x, int y, Lod lod, Stream dataSource, string? fileExtension = null)
+    public TileInfo(string world, int x, int y, Lod lod, Stream dataSource, string fileExtension)
     {
         World = world;
         X = x;
         Y = y;
         Lod = lod;
         DataSource = dataSource;
+        FileExtension = fileExtension;
     }
 
     /// <summary>
@@ -73,23 +74,21 @@ public record TileInfo : IDisposable
         if (!dataSource.CanSeek)
             throw new ArgumentException("The data stream must be able to seek", nameof(dataSource));
 
-        // Get the extension, if available
-        string? fileExtension = null;
-        string[] extensionComponents = tileName.Split('.');
-        if (extensionComponents.Length == 2)
-            fileExtension = extensionComponents[1];
-
         tile = null;
+
+        // Get the extension, if available
+        string[] extensionComponents = tileName.Split('.');
         string[] nameComponents = extensionComponents[0].Split('_');
+
+        if (extensionComponents.Length != 2)
+            return false;
+        string fileExtension = extensionComponents[1];
 
         int tileComponentIndex = Array.IndexOf(nameComponents, "Tile");
         if (tileComponentIndex == -1)
             return false;
 
         if (nameComponents.Length != 4 + tileComponentIndex)
-            return false;
-
-        if (!Enum.TryParse(string.Join('_', nameComponents[0..(tileComponentIndex)]), true, out AssetZone world))
             return false;
 
         if (nameComponents[tileComponentIndex++] != "Tile")
@@ -104,33 +103,35 @@ public record TileInfo : IDisposable
         if (!Enum.TryParse(nameComponents[tileComponentIndex++], true, out Lod lod))
             return false;
 
-        tile = new TileInfo(world, x, y, lod, dataSource, fileExtension);
+        tile = new TileInfo(nameComponents[0], x, y, lod, dataSource, fileExtension);
 
         return true;
     }
 
     public override string ToString()
-    {
-        return $"{World}_Tile_{Y}_{X}_{Lod}";
-    }
+        => $"{World}_Tile_{Y}_{X}_{Lod}";
 
+    /// <inheritdoc />
     public void Dispose()
     {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
         Dispose(true);
         GC.SuppressFinalize(this);
     }
 
-    protected virtual void Dispose(bool disposing)
+    /// <summary>
+    /// Disposes of managed and unmanaged resources.
+    /// </summary>
+    /// <param name="disposedManaged">A value indicating whether or not to dispose of managed resources.</param>
+    protected virtual void Dispose(bool disposedManaged)
     {
-        if (!IsDisposed)
-        {
-            if (disposing)
-            {
-                DataSource.Dispose();
-            }
+        if (IsDisposed)
+            return;
 
-            IsDisposed = true;
+        if (disposedManaged)
+        {
+            DataSource.Dispose();
         }
+
+        IsDisposed = true;
     }
 }

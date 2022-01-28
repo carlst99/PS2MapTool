@@ -8,14 +8,14 @@ namespace PS2MapTool.Tiles;
 /// </summary>
 public class TileBucket
 {
-    private readonly Dictionary<AssetZone, Dictionary<Lod, List<TileInfo>>> _lodBucket;
+    private readonly Dictionary<string, Dictionary<Lod, List<TileInfo>>> _lodBucket;
 
     /// <summary>
     /// Initialises a new instance of the <see cref="WorldLodBucket"/> object.
     /// </summary>
     public TileBucket()
     {
-        _lodBucket = new Dictionary<AssetZone, Dictionary<Lod, List<TileInfo>>>();
+        _lodBucket = new Dictionary<string, Dictionary<Lod, List<TileInfo>>>();
     }
 
     /// <summary>
@@ -49,14 +49,14 @@ public class TileBucket
     /// Gets all the worlds that this bucket is storing tiles of.
     /// </summary>
     /// <returns></returns>
-    public IEnumerable<AssetZone> GetWorlds() => _lodBucket.Keys;
+    public IEnumerable<string> GetWorlds() => _lodBucket.Keys;
 
     /// <summary>
     /// Gets all the LODs for a world that this bucket is storing tiles of.
     /// </summary>
     /// <param name="world">The world to get the LODs of.</param>
     /// <returns></returns>
-    public IEnumerable<Lod> GetLods(AssetZone world) => _lodBucket[world].Keys;
+    public IEnumerable<Lod> GetLods(string world) => _lodBucket[world].Keys;
 
     /// <summary>
     /// Gets the stored tiles for a particular world/LOD.
@@ -64,7 +64,7 @@ public class TileBucket
     /// <param name="world">The world to get tiles for.</param>
     /// <param name="lod">The LOD of the world to get tiles for."/></param>
     /// <returns></returns>
-    public List<TileInfo> GetTiles(AssetZone world, Lod lod)
+    public List<TileInfo> GetTiles(string world, Lod lod)
     {
         if (!_lodBucket.ContainsKey(world))
             throw new ArgumentException("No tiles for that world have been stored in this bucket.", nameof(world));

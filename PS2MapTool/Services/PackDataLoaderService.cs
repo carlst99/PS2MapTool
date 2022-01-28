@@ -1,6 +1,6 @@
-﻿using PS2MapTool.Areas;
+﻿using PS2MapTool.Abstractions.Services;
+using PS2MapTool.Areas;
 using PS2MapTool.Tiles;
-using PS2MapTool.Services.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -26,13 +26,13 @@ public class PackDataLoaderService : IDataLoaderService
     }
 
     /// <inheritdoc />
-    public virtual IEnumerable<TileInfo> GetTiles(AssetZone world, Lod lod, CancellationToken ct = default)
+    public virtual IEnumerable<TileInfo> GetTiles(string worldName, Lod lod, CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public virtual Task<AreasSourceInfo> GetAreasAsync(AssetZone world, CancellationToken ct = default)
+    public virtual Task<AreasSourceInfo> GetAreasAsync(string worldName, CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }

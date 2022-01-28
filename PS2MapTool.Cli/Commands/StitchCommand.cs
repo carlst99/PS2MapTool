@@ -2,6 +2,7 @@
 using CliFx.Attributes;
 using CliFx.Exceptions;
 using CliFx.Infrastructure;
+using PS2MapTool.Abstractions.Services;
 using PS2MapTool.Cli.Validators;
 using PS2MapTool.Services;
 using PS2MapTool.Services.Abstractions;
@@ -77,7 +78,7 @@ public class StitchCommand : ICommand
             return;
 
         _stopwatch.Start();
-        foreach (AssetZone world in tileBucket.GetWorlds())
+        foreach (string world in tileBucket.GetWorlds())
         {
             foreach (Lod lod in tileBucket.GetLods(world))
             {
@@ -168,14 +169,14 @@ public class StitchCommand : ICommand
         {
             foreach (Lod l in Lods!)
             {
-                IEnumerable<TileInfo> tiles = _dataLoader.GetTiles(w, l, _ct);
+                IEnumerable<TileInfo> tiles = _dataLoader.GetTiles(w.ToString(), l, _ct);
                 bucket.AddTiles(tiles);
             }
         }
         _console.MarkupLine("\t " + Formatter.Success("Done"));
 
         _console.WriteLine("Maps will be generated for:");
-        foreach (AssetZone world in bucket.GetWorlds())
+        foreach (string world in bucket.GetWorlds())
             _console.MarkupLine($"\t{ Formatter.World(world) }: { Formatter.Lod(string.Join(',', bucket.GetLods(world))) }");
 
         _console.WriteLine();

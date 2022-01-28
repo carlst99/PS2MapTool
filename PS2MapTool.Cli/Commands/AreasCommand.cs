@@ -2,6 +2,7 @@
 using CliFx.Attributes;
 using CliFx.Exceptions;
 using CliFx.Infrastructure;
+using PS2MapTool.Abstractions.Services;
 using PS2MapTool.Areas;
 using PS2MapTool.Services;
 using PS2MapTool.Services.Abstractions;
@@ -64,7 +65,7 @@ public class AreasCommand : ICommand
             AreasSourceInfo? areasSourceInfo = null;
             try
             {
-                areasSourceInfo = await _dataLoaderService.GetAreasAsync(world, _ct).ConfigureAwait(false);
+                areasSourceInfo = await _dataLoaderService.GetAreasAsync(world.ToString(), _ct).ConfigureAwait(false);
             }
             catch (FileNotFoundException)
             {
