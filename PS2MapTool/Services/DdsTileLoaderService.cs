@@ -18,7 +18,7 @@ public class DdsTileLoaderService : ITileLoaderService
     public static readonly byte[] DDS_MAGIC_ID = new byte[] { 0x44, 0x44, 0x53, 0x20 };
 
     /// <inheritdoc />
-    public bool CanLoad(TileInfo tile)
+    public bool CanLoad(TileDataSource tile)
     {
         Stream tileSource = tile.DataSource;
         if (!tileSource.CanSeek || !tileSource.CanRead)
@@ -39,7 +39,7 @@ public class DdsTileLoaderService : ITileLoaderService
     /// </summary>
     /// <remarks>Adapted from <see href="https://github.com/nickbabcock/Pfim/blob/master/src/Pfim.ImageSharp/Program.cs"/>.</remarks>
     /// <returns>An <see cref="Image{Bgra32}"/>.</returns>
-    public virtual Task<Image> LoadAsync(TileInfo tile, CancellationToken ct = default)
+    public virtual Task<Image> LoadAsync(TileDataSource tile, CancellationToken ct = default)
     {
         Stream tileSource = tile.DataSource;
         PooledAllocator allocator = new();

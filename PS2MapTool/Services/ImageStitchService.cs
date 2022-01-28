@@ -31,9 +31,9 @@ public class ImageStitchService : IImageStitchService
     }
 
     /// <inheritdoc />
-    public virtual async Task<Image<Rgba32>> StitchTilesAsync(IList<TileInfo> tiles, CancellationToken ct = default)
+    public virtual async Task<Image<Rgba32>> StitchTilesAsync(IList<TileDataSource> tiles, CancellationToken ct = default)
     {
-        IEnumerable<TileInfo> orderedBucket = tiles.OrderByDescending(t => t.Y).ThenBy(t => t.X);
+        IEnumerable<TileDataSource> orderedBucket = tiles.OrderByDescending(t => t.Y).ThenBy(t => t.X);
 
         double root = Math.Sqrt(tiles.Count);
         if (root != (int)root)
@@ -46,7 +46,7 @@ public class ImageStitchService : IImageStitchService
 
         // Draw each tile onto the stitched image.
         int x = 0, y = 0;
-        foreach (TileInfo tile in orderedBucket)
+        foreach (TileDataSource tile in orderedBucket)
         {
             if (!_tileProcessorRepository.TryGet(tile, out ITileLoaderService? loader))
                 throw new Exception($"The tile {tile.World}Tile__{tile.X}_{tile.Y}_{tile.Lod} is an unknown image format.");

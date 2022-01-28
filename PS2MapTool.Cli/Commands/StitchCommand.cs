@@ -86,7 +86,7 @@ public class StitchCommand : ICommand
                 {
                     _console.MarkupLine($"Stitching tiles for { Formatter.World(world) } at { Formatter.Lod(lod) }...");
 
-                    IList<TileInfo> tiles = tileBucket.GetTiles(world, lod);
+                    IList<TileDataSource> tiles = tileBucket.GetTiles(world, lod);
                     string outputFilePath = Path.Combine(OutputPath, $"{world}_{lod}.png");
 
                     using (Image<Rgba32> map = await _imageStitchService.StitchTilesAsync(tiles, _ct).ConfigureAwait(false))
@@ -99,7 +99,7 @@ public class StitchCommand : ICommand
                     }
 
                         // Release the now-unused tiles
-                        foreach (TileInfo t in tiles)
+                        foreach (TileDataSource t in tiles)
                         t.Dispose();
 
                     if (!DisableCompression)
@@ -169,7 +169,7 @@ public class StitchCommand : ICommand
         {
             foreach (Lod l in Lods!)
             {
-                IEnumerable<TileInfo> tiles = _dataLoader.GetTiles(w.ToString(), l, _ct);
+                IEnumerable<TileDataSource> tiles = _dataLoader.GetTilesAsync(w.ToString(), l, _ct);
                 bucket.AddTiles(tiles);
             }
         }

@@ -26,7 +26,7 @@ public class PackDataLoaderService : IDataLoaderService
     }
 
     /// <inheritdoc />
-    public virtual IEnumerable<TileInfo> GetTiles(string worldName, Lod lod, CancellationToken ct = default)
+    public virtual IEnumerable<TileDataSource> GetTiles(string worldName, Lod lod, CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }

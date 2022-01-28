@@ -25,7 +25,7 @@ public sealed class TileLoaderServiceRepository
     /// <param name="tileDataSource">The tile data to load.</param>
     /// <param name="tileLoaderService">The resolved processor service.</param>
     /// <returns>A value indicating if a processor service was found.</returns>
-    public bool TryGet(TileInfo tile, [NotNullWhen(true)] out ITileLoaderService? tileLoaderService)
+    public bool TryGet(TileDataSource tile, [NotNullWhen(true)] out ITileLoaderService? tileLoaderService)
     {
         foreach (ITileLoaderService loader in _repository)
         {

@@ -6,6 +6,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System;
+using System.Runtime.CompilerServices;
+using Microsoft.Win32.SafeHandles;
+using CommunityToolkit.HighPerformance.Buffers;
 
 namespace PS2MapTool.Services;
 
@@ -34,7 +37,7 @@ public class DirectoryDataLoaderService : IDataLoaderService
 
     /// <inheritdoc />
     /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
-    public virtual IEnumerable<TileInfo> GetTiles(string worldName, Lod lod, CancellationToken ct = default)
+    public virtual IAsyncEnumerable<TileDataSource> GetTilesAsync(string worldName, Lod lod, CancellationToken ct = default)
     {
         if (!Directory.Exists(_directory))
             throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
@@ -46,18 +49,28 @@ public class DirectoryDataLoaderService : IDataLoaderService
         };
 
         string searchPattern = worldName + $"_Tile_???_???_{lod}.*";
-        return TileIterator();
+        return TileIteratorAsync(ct);
 
-        IEnumerable<TileInfo> TileIterator()
+        async IAsyncEnumerable<TileDataSource> TileIteratorAsync([EnumeratorCancellation] CancellationToken ct)
         {
             foreach (string path in Directory.EnumerateFiles(_directory, searchPattern, enumerationOptions))
             {
-                FileStream fs = new(path, FileMode.Open, FileAccess.Read);
+                if (!TileDataSource.TryParseName(Path.GetFileName(path), out TileDataSource? tile))
+                    continue;
 
-                if (TileInfo.TryParse(Path.GetFileName(path), fs, out TileInfo? tile))
-                    yield return tile;
-                else
-                    fs.Dispose();
+                using SafeFileHandle outputHandle = File.OpenHandle
+                (
+                    path,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.Read,
+                    FileOptions.Asynchronous
+                );
+
+                MemoryOwner<byte> data = MemoryOwner<byte>.Allocate((int)RandomAccess.GetLength(outputHandle));
+                await RandomAccess.ReadAsync(outputHandle, data.Memory, 0, ct).ConfigureAwait(false);
+
+                yield return tile with { Data = data };
             }
         }
     }
