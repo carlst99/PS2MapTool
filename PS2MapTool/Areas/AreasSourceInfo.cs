@@ -1,57 +1,56 @@
 ﻿using System;
 using System.IO;
 
-namespace PS2MapTool.Areas
+namespace PS2MapTool.Areas;
+
+/// <summary>
+/// Contains information about an areas data source.
+/// </summary>
+public record AreasSourceInfo : IDisposable
 {
     /// <summary>
-    /// Contains information about an areas data source.
+    /// The world of the areas.
     /// </summary>
-    public record AreasSourceInfo : IDisposable
+    public AssetZone World { get; init; }
+
+    /// <summary>
+    /// The data source.
+    /// </summary>
+    public Stream DataSource { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating if this <see cref="AreasSourceInfo"/> object has been disposed.
+    /// </summary>
+    public bool IsDisposed { get; protected set; }
+
+    /// <summary>
+    /// Initialises a new instance of the <see cref="AreasSourceInfo"/> object.
+    /// </summary>
+    /// <param name="world">The world of the areas.</param>
+    /// <param name="dataSource">The data source.</param>
+    public AreasSourceInfo(AssetZone world, Stream dataSource)
     {
-        /// <summary>
-        /// The world of the areas.
-        /// </summary>
-        public AssetZone World { get; init; }
+        World = world;
+        DataSource = dataSource;
+    }
 
-        /// <summary>
-        /// The data source.
-        /// </summary>
-        public Stream DataSource { get; init; }
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'DisposeAsync(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 
-        /// <summary>
-        /// Gets a value indicating if this <see cref="AreasSourceInfo"/> object has been disposed.
-        /// </summary>
-        public bool IsDisposed { get; protected set; }
-
-        /// <summary>
-        /// Initialises a new instance of the <see cref="AreasSourceInfo"/> object.
-        /// </summary>
-        /// <param name="world">The world of the areas.</param>
-        /// <param name="dataSource">The data source.</param>
-        public AreasSourceInfo(AssetZone world, Stream dataSource)
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!IsDisposed)
         {
-            World = world;
-            DataSource = dataSource;
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'DisposeAsync(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!IsDisposed)
+            if (disposing)
             {
-                if (disposing)
-                {
-                    DataSource.Dispose();
-                }
-
-                IsDisposed = true;
+                DataSource.Dispose();
             }
+
+            IsDisposed = true;
         }
     }
 }

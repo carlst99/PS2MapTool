@@ -1,49 +1,48 @@
-﻿namespace PS2MapTool
+﻿namespace PS2MapTool;
+
+/// <summary>
+/// Defines zones as represented within the game assets.
+/// </summary>
+public enum AssetZone
 {
+    Amerish,
+
     /// <summary>
-    /// Defines zones as represented within the game assets.
+    /// PSArena map
     /// </summary>
-    public enum AssetZone
-    {
-        Amerish,
+    AmerishBR,
 
-        /// <summary>
-        /// PSArena map
-        /// </summary>
-        AmerishBR,
+    /// <summary>
+    /// PSArena map
+    /// </summary>
+    Arena_02,
+    Esamir,
 
-        /// <summary>
-        /// PSArena map
-        /// </summary>
-        Arena_02,
-        Esamir,
+    /// <summary>
+    /// PSArena map
+    /// </summary>
+    Exodus,
+    Hossin,
+    Indar,
 
-        /// <summary>
-        /// PSArena map
-        /// </summary>
-        Exodus,
-        Hossin,
-        Indar,
+    /// <summary>
+    /// Unfinished two-faction head to head map, intended for outfit vs. outfit competitive play.
+    /// </summary>
+    Nexus,
 
-        /// <summary>
-        /// Unfinished two-faction head to head map, intended for outfit vs. outfit competitive play.
-        /// </summary>
-        Nexus,
+    Oshur,
 
-        Oshur,
+    /// <summary>
+    /// Desolation; the Outfit Wars map
+    /// </summary>
+    OutfitWars,
 
-        /// <summary>
-        /// Desolation; the Outfit Wars map
-        /// </summary>
-        OutfitWars,
+    /// <summary>
+    /// Koltyr
+    /// </summary>
+    Quickload,
 
-        /// <summary>
-        /// Koltyr
-        /// </summary>
-        Quickload,
-
-        Sanctuary,
-        Tutorial,
-        VR
-    }
+    Sanctuary,
+    Tutorial,
+    VR
 }

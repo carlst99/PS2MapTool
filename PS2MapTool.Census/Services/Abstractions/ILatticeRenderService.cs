@@ -1,6 +1,5 @@
-﻿namespace PS2MapTool.Census.Services.Abstractions
+﻿namespace PS2MapTool.Census.Services.Abstractions;
+
+public interface ILatticeRenderService
 {
-    public interface ILatticeRenderService
-    {
-    }
 }

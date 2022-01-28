@@ -6,110 +6,109 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PS2MapTool.Services
+namespace PS2MapTool.Services;
+
+/// <summary>
+/// Provides functions to load mapping data from a directory.
+/// </summary>
+public class DirectoryDataLoaderService : IDataLoaderService
 {
+    protected readonly string _directory;
+    protected readonly SearchOption _searchOption;
+
     /// <summary>
-    /// Provides functions to load mapping data from a directory.
+    /// Initialises a new instance of the <see cref="DirectoryDataLoaderService"/> object.
     /// </summary>
-    public class DirectoryDataLoaderService : IDataLoaderService
+    /// <param name="directory">The directory to search for files in.</param>
+    /// <param name="searchOption">The search option to use.</param>
+    public DirectoryDataLoaderService(string directory, SearchOption searchOption)
     {
-        protected readonly string _directory;
-        protected readonly SearchOption _searchOption;
+        _directory = directory;
+        _searchOption = searchOption;
+    }
 
-        /// <summary>
-        /// Initialises a new instance of the <see cref="DirectoryDataLoaderService"/> object.
-        /// </summary>
-        /// <param name="directory">The directory to search for files in.</param>
-        /// <param name="searchOption">The search option to use.</param>
-        public DirectoryDataLoaderService(string directory, SearchOption searchOption)
+    /// <inheritdoc />
+    /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
+    public virtual IEnumerable<TileInfo> GetTiles(AssetZone world, Lod lod, CancellationToken ct = default)
+    {
+        if (!Directory.Exists(_directory))
+            throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
+
+        EnumerationOptions enumerationOptions = new()
         {
-            _directory = directory;
-            _searchOption = searchOption;
-        }
+            MatchCasing = MatchCasing.CaseInsensitive,
+            RecurseSubdirectories = _searchOption == SearchOption.AllDirectories
+        };
+        string searchPattern = world.ToString() + $"_Tile_???_???_{lod}.*";
 
-        /// <inheritdoc />
-        /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
-        public virtual IEnumerable<TileInfo> GetTiles(AssetZone world, Lod lod, CancellationToken ct = default)
+        foreach (string path in Directory.EnumerateFiles(_directory, searchPattern, enumerationOptions))
         {
-            if (!Directory.Exists(_directory))
-                throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
+            FileStream fs = new(path, FileMode.Open, FileAccess.Read);
 
-            EnumerationOptions enumerationOptions = new()
-            {
-                MatchCasing = MatchCasing.CaseInsensitive,
-                RecurseSubdirectories = _searchOption == SearchOption.AllDirectories
-            };
-            string searchPattern = world.ToString() + $"_Tile_???_???_{lod}.*";
-
-            foreach (string path in Directory.EnumerateFiles(_directory, searchPattern, enumerationOptions))
-            {
-                FileStream fs = new(path, FileMode.Open, FileAccess.Read);
-
-                if (TileInfo.TryParse(Path.GetFileName(path), fs, out TileInfo? tile))
-                    yield return tile;
-                else
-                    fs.Dispose();
-            }
-        }
-
-        /// <inheritdoc />
-        /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
-        /// <exception cref="FileNotFoundException">Thrown when an areas file could not be found.</exception>
-        public virtual async Task<AreasSourceInfo> GetAreasAsync(AssetZone world, CancellationToken ct = default)
-        {
-            if (!Directory.Exists(_directory))
-                throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
-
-            string fileName = world.ToString() + "Areas.xml";
-
-            string? filePath = await Task.Run(() =>
-            {
-                if (_searchOption == SearchOption.AllDirectories)
-                {
-                    return RecursiveFileSearch(fileName, _directory, ct);
-                }
-                else
-                {
-                    string path = Path.Combine(_directory, fileName);
-                    if (File.Exists(path))
-                        return path;
-                    else
-                        return null;
-                }
-            }, ct).ConfigureAwait(false);
-
-            if (filePath is null)
-                throw new FileNotFoundException("The Areas file for this world could not be found.");
+            if (TileInfo.TryParse(Path.GetFileName(path), fs, out TileInfo? tile))
+                yield return tile;
             else
-                return new AreasSourceInfo(world, new FileStream(filePath, FileMode.Open, FileAccess.Read));
+                fs.Dispose();
         }
+    }
 
-        /// <summary>
-        /// Recursively searches a directory, and all subdirectories, for a file. Faster than searching for a pattern as not all files are enumeration.
-        /// </summary>
-        /// <param name="fileName">The name of the file to find (including the extension).</param>
-        /// <param name="directory">The root directory to search.</param>
-        /// <param name="ct">A <see cref="CancellationToken"/> to cancel the search with.</param>
-        /// <returns>The path to the file, or a null value if the file could not be found.</returns>
-        /// <remarks>The search is performed in a depth-first manner.</remarks>
-        private static string? RecursiveFileSearch(string fileName, string directory, CancellationToken ct = default)
+    /// <inheritdoc />
+    /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when an areas file could not be found.</exception>
+    public virtual async Task<AreasSourceInfo> GetAreasAsync(AssetZone world, CancellationToken ct = default)
+    {
+        if (!Directory.Exists(_directory))
+            throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
+
+        string fileName = world.ToString() + "Areas.xml";
+
+        string? filePath = await Task.Run(() =>
         {
-            if (ct.IsCancellationRequested)
-                return null;
-
-            string? filePath = Path.Combine(directory, fileName);
-
-            if (File.Exists(filePath))
-                return filePath;
-
-            foreach (string subdirectory in Directory.EnumerateDirectories(directory))
+            if (_searchOption == SearchOption.AllDirectories)
             {
-                filePath = RecursiveFileSearch(fileName, subdirectory, ct);
-                if (filePath is not null)
-                    return filePath;
+                return RecursiveFileSearch(fileName, _directory, ct);
             }
+            else
+            {
+                string path = Path.Combine(_directory, fileName);
+                if (File.Exists(path))
+                    return path;
+                else
+                    return null;
+            }
+        }, ct).ConfigureAwait(false);
 
+        if (filePath is null)
+            throw new FileNotFoundException("The Areas file for this world could not be found.");
+        else
+            return new AreasSourceInfo(world, new FileStream(filePath, FileMode.Open, FileAccess.Read));
+    }
+
+    /// <summary>
+    /// Recursively searches a directory, and all subdirectories, for a file. Faster than searching for a pattern as not all files are enumeration.
+    /// </summary>
+    /// <param name="fileName">The name of the file to find (including the extension).</param>
+    /// <param name="directory">The root directory to search.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> to cancel the search with.</param>
+    /// <returns>The path to the file, or a null value if the file could not be found.</returns>
+    /// <remarks>The search is performed in a depth-first manner.</remarks>
+    private static string? RecursiveFileSearch(string fileName, string directory, CancellationToken ct = default)
+    {
+        if (ct.IsCancellationRequested)
             return null;
+
+        string? filePath = Path.Combine(directory, fileName);
+
+        if (File.Exists(filePath))
+            return filePath;
+
+        foreach (string subdirectory in Directory.EnumerateDirectories(directory))
+        {
+            filePath = RecursiveFileSearch(fileName, subdirectory, ct);
+            if (filePath is not null)
+                return filePath;
         }
+
+        return null;
     }
 }

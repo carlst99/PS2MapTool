@@ -1,10 +1,9 @@
-﻿namespace PS2MapTool
+﻿namespace PS2MapTool;
+
+public enum Lod
 {
-    public enum Lod
-    {
-        Lod0 = 0,
-        Lod1 = 1,
-        Lod2 = 2,
-        Lod3 = 3
-    }
+    Lod0 = 0,
+    Lod1 = 1,
+    Lod2 = 2,
+    Lod3 = 3
 }
