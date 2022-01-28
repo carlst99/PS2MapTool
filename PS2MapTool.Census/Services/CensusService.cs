@@ -47,7 +47,7 @@ namespace PS2MapTool.Census.Services
             return await GetEntireCollection<MapHex>(query, ct).ConfigureAwait(false);
         }
 
-        ]/// <inheritdoc />
+        /// <inheritdoc />
         public virtual async Task<List<MapRegion>> GetMapRegionsAsync(CensusZone zone, CancellationToken ct = default)
         {
             IQueryBuilder query = _queryService.CreateQuery()

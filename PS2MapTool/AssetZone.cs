@@ -30,6 +30,8 @@
         /// </summary>
         Nexus,
 
+        Oshur,
+
         /// <summary>
         /// Desolation; the Outfit Wars map
         /// </summary>
