@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace PS2MapTool.Services.Abstractions;
+namespace PS2MapTool.Abstractions.Services;
 
 /// <summary>
 /// Provides functions to compress images

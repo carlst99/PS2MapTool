@@ -3,10 +3,12 @@ using CliFx.Attributes;
 using CliFx.Exceptions;
 using CliFx.Infrastructure;
 using PS2MapTool.Abstractions.Services;
+using PS2MapTool.Abstractions.Tiles;
+using PS2MapTool.Abstractions.Tiles.Services;
 using PS2MapTool.Cli.Validators;
 using PS2MapTool.Services;
-using PS2MapTool.Services.Abstractions;
 using PS2MapTool.Tiles;
+using PS2MapTool.Tiles.Services;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Spectre.Console;
@@ -23,8 +25,7 @@ namespace PS2MapTool.Cli.Commands;
 public class StitchCommand : ICommand
 {
     private readonly Stopwatch _stopwatch;
-    private readonly ParallelTaskRunner _taskRunner;
-    private readonly IImageStitchService _imageStitchService;
+    private readonly ITileStitchService _imageStitchService;
     private readonly IImageCompressionService _compressionService;
 
     private IDataLoaderService _dataLoader;
@@ -56,13 +57,12 @@ public class StitchCommand : ICommand
     public StitchCommand()
     {
         _stopwatch = new Stopwatch();
-        _taskRunner = new ParallelTaskRunner();
         _compressionService = new OptiPngCompressionService();
 
         TileLoaderServiceRepository repo = new();
         repo.Add(new DdsTileLoaderService());
         repo.Add(new PngTileLoaderService());
-        _imageStitchService = new ImageStitchService(repo);
+        _imageStitchService = new TileStitchService(repo);
 
         TilesSource = string.Empty;
         OutputPath = string.Empty;
@@ -73,7 +73,7 @@ public class StitchCommand : ICommand
     {
         Setup(console);
 
-        TileBucket? tileBucket = GetTileBucket();
+        using TileBucket? tileBucket = await GetTileBucketAsync();
         if (tileBucket is null)
             return;
 
@@ -82,40 +82,31 @@ public class StitchCommand : ICommand
         {
             foreach (Lod lod in tileBucket.GetLods(world))
             {
-                Task t = new(async () =>
+                _console.MarkupLine($"Stitching tiles for { Formatter.World(world) } at { Formatter.Lod(lod) }...");
+                IList<ITileDataSource> tiles = tileBucket.GetTiles(world, lod);
+                using Image<Rgba32> map = await _imageStitchService.StitchAsync(tiles, _ct).ConfigureAwait(false);
+
+                // Preemptively clean up tiles so we aren't holding on to more memory than necessary
+                foreach (ITileDataSource tile in tiles)
                 {
-                    _console.MarkupLine($"Stitching tiles for { Formatter.World(world) } at { Formatter.Lod(lod) }...");
+                    if (tile is IDisposable disposable)
+                        disposable.Dispose();
+                }
 
-                    IList<TileDataSource> tiles = tileBucket.GetTiles(world, lod);
-                    string outputFilePath = Path.Combine(OutputPath, $"{world}_{lod}.png");
+                // Save the stitched image.
+                _console.MarkupLine($"Saving { Formatter.World(world) } at { Formatter.Lod(lod) }...");
+                string outputFilePath = Path.Combine(OutputPath, $"{world}_{lod}.png");
+                map.SaveAsPng(outputFilePath);
+                _console.MarkupLine($"{ Formatter.Success("Completed") } saving { Formatter.World(world) } at { Formatter.Lod(lod) } to { Formatter.Path(outputFilePath) }");
 
-                    using (Image<Rgba32> map = await _imageStitchService.StitchTilesAsync(tiles, _ct).ConfigureAwait(false))
-                    {
-                        _console.MarkupLine($"Saving { Formatter.World(world) } at { Formatter.Lod(lod) }...");
-
-                            // Save the stitched image.
-                            map.SaveAsPng(outputFilePath);
-                        _console.MarkupLine($"{ Formatter.Success("Completed") } saving { Formatter.World(world) } at { Formatter.Lod(lod) } to { Formatter.Path(outputFilePath) }");
-                    }
-
-                        // Release the now-unused tiles
-                        foreach (TileDataSource t in tiles)
-                        t.Dispose();
-
-                    if (!DisableCompression)
-                    {
-                        _console.MarkupLine($"Compressing { Formatter.World(world) } at { Formatter.Lod(lod) }...");
-                        await _compressionService.CompressAsync(outputFilePath, _ct).ConfigureAwait(false);
-                        _console.MarkupLine($"{ Formatter.Success("Completed") } compressing { Formatter.World(world) } at { Formatter.Lod(lod) }");
-                    }
-                }, _ct, TaskCreationOptions.LongRunning);
-                _taskRunner.EnqueueTask(t);
+                if (!DisableCompression)
+                {
+                    _console.MarkupLine($"Compressing { Formatter.World(world) } at { Formatter.Lod(lod) }...");
+                    await _compressionService.CompressAsync(outputFilePath, _ct).ConfigureAwait(false);
+                    _console.MarkupLine($"{ Formatter.Success("Completed") } compressing { Formatter.World(world) } at { Formatter.Lod(lod) }");
+                }
             }
         }
-
-        // Job done, wait for all tasks to complete.
-        await _taskRunner.WaitForAll().ConfigureAwait(false);
-        _taskRunner.Stop();
 
         _console.WriteLine();
         _console.MarkupLine(Formatter.Success("Completed in " + _stopwatch.Elapsed/*.ToString(@"hh\h\ mm\m\ ss\s")*/));
@@ -153,14 +144,12 @@ public class StitchCommand : ICommand
         {
             Out = new AnsiConsoleOutput(console.Output)
         });
-
-        _taskRunner.Start(_ct, MaxParallelism, (e) => console.Error.WriteLine(e));
     }
 
     /// <summary>
     /// Filters through all files in the source directory and sorts tiles into applicable <see cref="_worldLodBuckets"/>.
     /// </summary>
-    private TileBucket? GetTileBucket()
+    private async Task<TileBucket?> GetTileBucketAsync()
     {
         _console.Write("Generating tile buckets...");
         TileBucket bucket = new();
@@ -169,8 +158,8 @@ public class StitchCommand : ICommand
         {
             foreach (Lod l in Lods!)
             {
-                IEnumerable<TileDataSource> tiles = _dataLoader.GetTilesAsync(w.ToString(), l, _ct);
-                bucket.AddTiles(tiles);
+                IAsyncEnumerable<ITileDataSource> tiles = _dataLoader.GetTilesAsync(w.ToString(), l, _ct);
+                await bucket.AddTilesAsync(tiles, _ct);
             }
         }
         _console.MarkupLine("\t " + Formatter.Success("Done"));

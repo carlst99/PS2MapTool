@@ -1,5 +1,6 @@
-﻿using PS2MapTool.Services.Abstractions;
-using PS2MapTool.Tiles;
+﻿using PS2MapTool.Abstractions.Tiles;
+using PS2MapTool.Abstractions.Tiles.Services;
+using PS2MapTool.Services;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -9,10 +10,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PS2MapTool.Services;
+namespace PS2MapTool.Tiles.Services;
 
-/// <inheritdoc cref="IImageStitchService"/>
-public class ImageStitchService : IImageStitchService
+/// <inheritdoc cref="ITileStitchService"/>
+public class TileStitchService : ITileStitchService
 {
     /// <summary>
     /// The pixel size of each tile.
@@ -22,18 +23,18 @@ public class ImageStitchService : IImageStitchService
     private readonly TileLoaderServiceRepository _tileProcessorRepository;
 
     /// <summary>
-    /// Initialises a new instance of the <see cref="ImageStitchService"/> class.
+    /// Initialises a new instance of the <see cref="TileStitchService"/> class.
     /// </summary>
     /// <param name="tileProcessorRepository">The tile processor to use.</param>
-    public ImageStitchService(TileLoaderServiceRepository tileProcessorRepository)
+    public TileStitchService(TileLoaderServiceRepository tileProcessorRepository)
     {
         _tileProcessorRepository = tileProcessorRepository;
     }
 
     /// <inheritdoc />
-    public virtual async Task<Image<Rgba32>> StitchTilesAsync(IList<TileDataSource> tiles, CancellationToken ct = default)
+    public virtual async Task<Image<Rgba32>> StitchAsync(IList<ITileDataSource> tiles, CancellationToken ct = default)
     {
-        IEnumerable<TileDataSource> orderedBucket = tiles.OrderByDescending(t => t.Y).ThenBy(t => t.X);
+        IEnumerable<ITileDataSource> orderedBucket = tiles.OrderByDescending(t => t.Y).ThenBy(t => t.X);
 
         double root = Math.Sqrt(tiles.Count);
         if (root != (int)root)
@@ -46,10 +47,11 @@ public class ImageStitchService : IImageStitchService
 
         // Draw each tile onto the stitched image.
         int x = 0, y = 0;
-        foreach (TileDataSource tile in orderedBucket)
+        foreach (ITileDataSource tile in orderedBucket)
         {
-            if (!_tileProcessorRepository.TryGet(tile, out ITileLoaderService? loader))
-                throw new Exception($"The tile {tile.World}Tile__{tile.X}_{tile.Y}_{tile.Lod} is an unknown image format.");
+            ITileLoaderService? loader = await _tileProcessorRepository.TryGetAsync(tile, ct).ConfigureAwait(false);
+            if (loader is null)
+                throw new Exception($"The tile {tile.WorldName}Tile__{tile.X}_{tile.Y}_{tile.Lod} is an unknown image format.");
 
             Image tileImage = await loader.LoadAsync(tile, ct).ConfigureAwait(false);
             tileImage.Mutate(o => o.Flip(FlipMode.Vertical));

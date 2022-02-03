@@ -9,6 +9,7 @@ using System;
 using System.Runtime.CompilerServices;
 using Microsoft.Win32.SafeHandles;
 using CommunityToolkit.HighPerformance.Buffers;
+using PS2MapTool.Abstractions.Tiles;
 
 namespace PS2MapTool.Services;
 
@@ -37,7 +38,7 @@ public class DirectoryDataLoaderService : IDataLoaderService
 
     /// <inheritdoc />
     /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
-    public virtual IAsyncEnumerable<TileDataSource> GetTilesAsync(string worldName, Lod lod, CancellationToken ct = default)
+    public virtual IAsyncEnumerable<ITileDataSource> GetTilesAsync(string worldName, Lod lod, CancellationToken ct = default)
     {
         if (!Directory.Exists(_directory))
             throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
@@ -51,14 +52,27 @@ public class DirectoryDataLoaderService : IDataLoaderService
         string searchPattern = worldName + $"_Tile_???_???_{lod}.*";
         return TileIteratorAsync(ct);
 
-        async IAsyncEnumerable<TileDataSource> TileIteratorAsync([EnumeratorCancellation] CancellationToken ct)
+        async IAsyncEnumerable<FileTileDataSource> TileIteratorAsync([EnumeratorCancellation] CancellationToken ct)
         {
             foreach (string path in Directory.EnumerateFiles(_directory, searchPattern, enumerationOptions))
             {
-                if (!TileDataSource.TryParseName(Path.GetFileName(path), out TileDataSource? tile))
+                if (ct.IsCancellationRequested)
+                    throw new TaskCanceledException();
+
+                bool canParseName = TileHelpers.TryParseName
+                (
+                    Path.GetFileName(path),
+                    out string? worldName,
+                    out int x,
+                    out int y,
+                    out Lod lod,
+                    out string? fileExtension
+                );
+
+                if (!canParseName)
                     continue;
 
-                using SafeFileHandle outputHandle = File.OpenHandle
+                SafeFileHandle outputHandle = File.OpenHandle
                 (
                     path,
                     FileMode.Open,
@@ -67,10 +81,7 @@ public class DirectoryDataLoaderService : IDataLoaderService
                     FileOptions.Asynchronous
                 );
 
-                MemoryOwner<byte> data = MemoryOwner<byte>.Allocate((int)RandomAccess.GetLength(outputHandle));
-                await RandomAccess.ReadAsync(outputHandle, data.Memory, 0, ct).ConfigureAwait(false);
-
-                yield return tile with { Data = data };
+                yield return new FileTileDataSource(worldName!, x, y, lod, fileExtension!, outputHandle);
             }
         }
     }

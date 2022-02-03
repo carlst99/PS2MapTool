@@ -1,5 +1,5 @@
-﻿using PS2MapTool.Areas;
-using PS2MapTool.Tiles;
+﻿using PS2MapTool.Abstractions.Tiles;
+using PS2MapTool.Areas;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +18,7 @@ public interface IDataLoaderService
     /// <param name="lod">The LOD to retrieve the map tiles of.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> used to cancel the tile enumeration.</param>
     /// <returns>The tiles.</returns>
-    IAsyncEnumerable<TileDataSource> GetTilesAsync(string worldName, Lod lod, CancellationToken ct = default);
+    IAsyncEnumerable<ITileDataSource> GetTilesAsync(string worldName, Lod lod, CancellationToken ct = default);
 
     /// <summary>
     /// Loads an <see cref="AreasSourceInfo"/> object from a data source.

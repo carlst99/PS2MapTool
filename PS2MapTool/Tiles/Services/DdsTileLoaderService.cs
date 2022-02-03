@@ -1,16 +1,16 @@
-﻿using Pfim;
-using PS2MapTool.Services.Abstractions;
-using PS2MapTool.Tiles;
+﻿using CommunityToolkit.HighPerformance.Buffers;
+using Pfim;
+using PS2MapTool.Abstractions.Tiles;
+using PS2MapTool.Abstractions.Tiles.Services;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Buffers;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PS2MapTool.Services;
+namespace PS2MapTool.Tiles.Services;
 
 /// <inheritdoc cref="ITileLoaderService"/>
 public class DdsTileLoaderService : ITileLoaderService
@@ -18,34 +18,36 @@ public class DdsTileLoaderService : ITileLoaderService
     public static readonly byte[] DDS_MAGIC_ID = new byte[] { 0x44, 0x44, 0x53, 0x20 };
 
     /// <inheritdoc />
-    public bool CanLoad(TileDataSource tile)
+    public async Task<bool> CanLoadAsync(ITileDataSource tile, CancellationToken ct = default)
     {
-        Stream tileSource = tile.DataSource;
-        if (!tileSource.CanSeek || !tileSource.CanRead)
-            return false;
+        using MemoryOwner<byte> buffer = await tile.GetTileDataAsync(ct).ConfigureAwait(false);
 
-        // Read the tile magic identifier and reset the stream position
-        long oldPos = tileSource.Position;
-        byte[] tileMagic = new byte[4];
-        tileSource.Read(tileMagic);
-        tileSource.Seek(oldPos, SeekOrigin.Begin);
+        for (int i = 0; i < DDS_MAGIC_ID.Length; i++)
+        {
+            if (buffer.Span[i] != DDS_MAGIC_ID[i])
+                return false;
+        }
 
-        return DDS_MAGIC_ID.SequenceEqual(tileMagic);
+        return true;
     }
 
-    /// <summary>
     /// <inheritdoc/>
-    /// Note that this operation does NOT complete asynchronously.
-    /// </summary>
     /// <remarks>Adapted from <see href="https://github.com/nickbabcock/Pfim/blob/master/src/Pfim.ImageSharp/Program.cs"/>.</remarks>
     /// <returns>An <see cref="Image{Bgra32}"/>.</returns>
-    public virtual Task<Image> LoadAsync(TileDataSource tile, CancellationToken ct = default)
+    public virtual async Task<Image> LoadAsync(ITileDataSource tile, CancellationToken ct = default)
     {
-        Stream tileSource = tile.DataSource;
+        using MemoryOwner<byte> buffer = await tile.GetTileDataAsync(ct).ConfigureAwait(false);
+        byte[] tempBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length);
+
+        buffer.Span.CopyTo(tempBuffer);
+        using MemoryStream ms = new(tempBuffer, 0, buffer.Length);
+
         PooledAllocator allocator = new();
         PfimConfig pfimConfig = new(allocator: allocator);
 
-        using Pfim.IImage image = Pfim.Pfim.FromStream(tileSource, pfimConfig);
+        using Pfim.IImage image = Pfim.Pfim.FromStream(ms, pfimConfig);
+        ArrayPool<byte>.Shared.Return(tempBuffer);
+
         byte[] newData;
 
         // Since image sharp can't handle data with line padding in a stride
@@ -67,8 +69,7 @@ public class DdsTileLoaderService : ITileLoaderService
             newData = image.Data;
         }
 
-        Image convertedImage = Image.LoadPixelData<Bgra32>(newData, image.Width, image.Height);
-        return Task.FromResult(convertedImage);
+        return Image.LoadPixelData<Bgra32>(newData, image.Width, image.Height);
     }
 
     private class PooledAllocator : IImageAllocator
@@ -76,13 +77,9 @@ public class DdsTileLoaderService : ITileLoaderService
         private readonly ArrayPool<byte> _shared = ArrayPool<byte>.Shared;
 
         public byte[] Rent(int size)
-        {
-            return _shared.Rent(size);
-        }
+            => _shared.Rent(size);
 
         public void Return(byte[] data)
-        {
-            _shared.Return(data);
-        }
+            => _shared.Return(data);
     }
 }

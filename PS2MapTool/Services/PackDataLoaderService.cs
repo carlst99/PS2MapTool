@@ -1,6 +1,6 @@
 ﻿using PS2MapTool.Abstractions.Services;
+using PS2MapTool.Abstractions.Tiles;
 using PS2MapTool.Areas;
-using PS2MapTool.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -26,7 +26,7 @@ public class PackDataLoaderService : IDataLoaderService
     }
 
     /// <inheritdoc />
-    public virtual IEnumerable<TileDataSource> GetTiles(string worldName, Lod lod, CancellationToken ct = default)
+    public virtual IAsyncEnumerable<ITileDataSource> GetTilesAsync(string worldName, Lod lod, CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
