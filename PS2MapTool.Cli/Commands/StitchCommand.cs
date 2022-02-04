@@ -80,40 +80,49 @@ public class StitchCommand : ICommand
         _stopwatch.Start();
         foreach (string world in tileBucket.GetWorlds())
         {
-            foreach (Lod lod in tileBucket.GetLods(world))
-            {
-                _console.MarkupLine($"Stitching tiles for { Formatter.World(world) } at { Formatter.Lod(lod) }...");
-
-                string outputFilePath = Path.Combine(OutputPath, $"{world}_{lod}.png");
-                IList<ITileDataSource> tiles = tileBucket.GetTiles(world, lod);
-
-                using (Image<Rgba32> map = await _imageStitchService.StitchAsync(tiles, _ct).ConfigureAwait(false))
+            await Parallel.ForEachAsync
+            (
+                tileBucket.GetLods(world),
+                new ParallelOptions
                 {
-                    // Preemptively clean up tiles so we aren't holding on to more memory than necessary
-                    foreach (ITileDataSource tile in tiles)
+                    CancellationToken = _ct,
+                    MaxDegreeOfParallelism = MaxParallelism
+                },
+                async (lod, ct) =>
+                {
+                    _console.MarkupLine($"Stitching tiles for { Formatter.World(world) } at { Formatter.Lod(lod) }...");
+
+                    string outputFilePath = Path.Combine(OutputPath, $"{world}_{lod}.png");
+                    IList<ITileDataSource> tiles = tileBucket.GetTiles(world, lod);
+
+                    using (Image<Rgba32> map = await _imageStitchService.StitchAsync(tiles, ct).ConfigureAwait(false))
                     {
-                        if (tile is IDisposable disposable)
-                            disposable.Dispose();
+                        // Preemptively clean up tiles so we aren't holding on to more memory than necessary
+                        foreach (ITileDataSource tile in tiles)
+                        {
+                            if (tile is IDisposable disposable)
+                                disposable.Dispose();
+                        }
+
+                        // Save the stitched image.
+                        _console.MarkupLine($"Saving { Formatter.World(world) } at { Formatter.Lod(lod) }...");
+                        await map.SaveAsPngAsync(outputFilePath, ct);
+
+                        _console.MarkupLine($"{ Formatter.Success("Completed") } saving { Formatter.World(world) } at { Formatter.Lod(lod) } to { Formatter.Path(outputFilePath) }");
                     }
 
-                    // Save the stitched image.
-                    _console.MarkupLine($"Saving { Formatter.World(world) } at { Formatter.Lod(lod) }...");
-                    map.SaveAsPng(outputFilePath);
-
-                    _console.MarkupLine($"{ Formatter.Success("Completed") } saving { Formatter.World(world) } at { Formatter.Lod(lod) } to { Formatter.Path(outputFilePath) }");
+                    if (!DisableCompression)
+                    {
+                        _console.MarkupLine($"Compressing { Formatter.World(world) } at { Formatter.Lod(lod) }...");
+                        await _compressionService.CompressAsync(outputFilePath, ct).ConfigureAwait(false);
+                        _console.MarkupLine($"{ Formatter.Success("Completed") } compressing { Formatter.World(world) } at { Formatter.Lod(lod) }");
+                    }
                 }
-
-                if (!DisableCompression)
-                {
-                    _console.MarkupLine($"Compressing { Formatter.World(world) } at { Formatter.Lod(lod) }...");
-                    await _compressionService.CompressAsync(outputFilePath, _ct).ConfigureAwait(false);
-                    _console.MarkupLine($"{ Formatter.Success("Completed") } compressing { Formatter.World(world) } at { Formatter.Lod(lod) }");
-                }
-            }
+            );
         }
 
         _console.WriteLine();
-        _console.MarkupLine(Formatter.Success("Completed in " + _stopwatch.Elapsed/*.ToString(@"hh\h\ mm\m\ ss\s")*/));
+        _console.MarkupLine(Formatter.Success("Completed in " + _stopwatch.Elapsed));
         _stopwatch.Reset();
     }
 
