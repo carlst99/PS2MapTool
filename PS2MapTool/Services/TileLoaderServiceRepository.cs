@@ -1,5 +1,5 @@
-﻿using PS2MapTool.Services.Abstractions;
-using PS2MapTool.Tiles;
+﻿using PS2MapTool.Abstractions.Tiles.Services;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -15,28 +15,27 @@ public sealed class TileLoaderServiceRepository
     }
 
     public void Add<T>(T processor) where T : ITileLoaderService
-    {
-        _repository.Add(processor);
-    }
+        => _repository.Add(processor);
 
     /// <summary>
     /// Tries to get a <see cref="ITileLoaderService"/> that can load tiles of the given format.
     /// </summary>
-    /// <param name="tileDataSource">The tile data to load.</param>
-    /// <param name="tileLoaderService">The resolved processor service.</param>
-    /// <returns>A value indicating if a processor service was found.</returns>
-    public bool TryGet(TileInfo tile, [NotNullWhen(true)] out ITileLoaderService? tileLoaderService)
+    /// <param name="buffer">The tile data to load.</param>
+    /// <param name="loader">A loader that can handle the give tile data, or null if no valid loaders were found.</param>
+    /// <returns>A value indicating whether or not a valid loader could be found.</returns>
+    public bool TryGet(ReadOnlySpan<byte> buffer, [NotNullWhen(true)] out ITileLoaderService? loader)
     {
-        foreach (ITileLoaderService loader in _repository)
+        loader = null;
+
+        foreach (ITileLoaderService l in _repository)
         {
-            if (loader.CanLoad(tile))
+            if (l.CanLoad(buffer))
             {
-                tileLoaderService = loader;
+                loader = l;
                 return true;
             }
         }
 
-        tileLoaderService = null;
         return false;
     }
 

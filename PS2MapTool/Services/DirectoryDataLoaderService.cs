@@ -1,15 +1,20 @@
 ﻿using PS2MapTool.Areas;
-using PS2MapTool.Services.Abstractions;
+using PS2MapTool.Abstractions.Services;
 using PS2MapTool.Tiles;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System;
+using System.Runtime.CompilerServices;
+using Microsoft.Win32.SafeHandles;
+using CommunityToolkit.HighPerformance.Buffers;
+using PS2MapTool.Abstractions.Tiles;
 
 namespace PS2MapTool.Services;
 
 /// <summary>
-/// Provides functions to load mapping data from a directory.
+/// Implements a <see cref="IDataLoaderService"/> that loads mapping data from a directory.
 /// </summary>
 public class DirectoryDataLoaderService : IDataLoaderService
 {
@@ -24,12 +29,16 @@ public class DirectoryDataLoaderService : IDataLoaderService
     public DirectoryDataLoaderService(string directory, SearchOption searchOption)
     {
         _directory = directory;
+
+        if (!Enum.IsDefined(searchOption))
+            throw new ArgumentException("The provided value is not a valid enum member", nameof(searchOption));
+
         _searchOption = searchOption;
     }
 
     /// <inheritdoc />
     /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
-    public virtual IEnumerable<TileInfo> GetTiles(AssetZone world, Lod lod, CancellationToken ct = default)
+    public virtual IAsyncEnumerable<ITileDataSource> GetTilesAsync(string worldName, Lod lod, CancellationToken ct = default)
     {
         if (!Directory.Exists(_directory))
             throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
@@ -37,30 +46,55 @@ public class DirectoryDataLoaderService : IDataLoaderService
         EnumerationOptions enumerationOptions = new()
         {
             MatchCasing = MatchCasing.CaseInsensitive,
-            RecurseSubdirectories = _searchOption == SearchOption.AllDirectories
+            RecurseSubdirectories = _searchOption is SearchOption.AllDirectories
         };
-        string searchPattern = world.ToString() + $"_Tile_???_???_{lod}.*";
 
-        foreach (string path in Directory.EnumerateFiles(_directory, searchPattern, enumerationOptions))
+        string searchPattern = worldName + $"_Tile_???_???_{lod}.*";
+        return TileIteratorAsync(ct);
+
+        async IAsyncEnumerable<FileTileDataSource> TileIteratorAsync([EnumeratorCancellation] CancellationToken ct)
         {
-            FileStream fs = new(path, FileMode.Open, FileAccess.Read);
+            foreach (string path in Directory.EnumerateFiles(_directory, searchPattern, enumerationOptions))
+            {
+                if (ct.IsCancellationRequested)
+                    throw new TaskCanceledException();
 
-            if (TileInfo.TryParse(Path.GetFileName(path), fs, out TileInfo? tile))
-                yield return tile;
-            else
-                fs.Dispose();
+                bool canParseName = TileHelpers.TryParseName
+                (
+                    Path.GetFileName(path),
+                    out string? worldName,
+                    out int x,
+                    out int y,
+                    out Lod lod,
+                    out string? fileExtension
+                );
+
+                if (!canParseName)
+                    continue;
+
+                SafeFileHandle outputHandle = File.OpenHandle
+                (
+                    path,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.Read,
+                    FileOptions.Asynchronous
+                );
+
+                yield return new FileTileDataSource(worldName!, x, y, lod, fileExtension!, outputHandle);
+            }
         }
     }
 
     /// <inheritdoc />
     /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
     /// <exception cref="FileNotFoundException">Thrown when an areas file could not be found.</exception>
-    public virtual async Task<AreasSourceInfo> GetAreasAsync(AssetZone world, CancellationToken ct = default)
+    public virtual async Task<AreasSourceInfo> GetAreasAsync(string worldName, CancellationToken ct = default)
     {
         if (!Directory.Exists(_directory))
             throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
 
-        string fileName = world.ToString() + "Areas.xml";
+        string fileName = worldName + "Areas.xml";
 
         string? filePath = await Task.Run(() =>
         {
@@ -81,11 +115,11 @@ public class DirectoryDataLoaderService : IDataLoaderService
         if (filePath is null)
             throw new FileNotFoundException("The Areas file for this world could not be found.");
         else
-            return new AreasSourceInfo(world, new FileStream(filePath, FileMode.Open, FileAccess.Read));
+            return new AreasSourceInfo(worldName, new FileStream(filePath, FileMode.Open, FileAccess.Read));
     }
 
     /// <summary>
-    /// Recursively searches a directory, and all subdirectories, for a file. Faster than searching for a pattern as not all files are enumeration.
+    /// Recursively searches a directory, and all subdirectories, for a single file.
     /// </summary>
     /// <param name="fileName">The name of the file to find (including the extension).</param>
     /// <param name="directory">The root directory to search.</param>

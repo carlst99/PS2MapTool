@@ -1,16 +1,12 @@
 ﻿using Pfim;
-using PS2MapTool.Services.Abstractions;
-using PS2MapTool.Tiles;
+using PS2MapTool.Abstractions.Tiles.Services;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Buffers;
 using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace PS2MapTool.Services;
+namespace PS2MapTool.Tiles.Services;
 
 /// <inheritdoc cref="ITileLoaderService"/>
 public class DdsTileLoaderService : ITileLoaderService
@@ -18,34 +14,37 @@ public class DdsTileLoaderService : ITileLoaderService
     public static readonly byte[] DDS_MAGIC_ID = new byte[] { 0x44, 0x44, 0x53, 0x20 };
 
     /// <inheritdoc />
-    public bool CanLoad(TileInfo tile)
+    public bool CanLoad(ReadOnlySpan<byte> buffer)
     {
-        Stream tileSource = tile.DataSource;
-        if (!tileSource.CanSeek || !tileSource.CanRead)
+        if (buffer.Length < DDS_MAGIC_ID.Length)
             return false;
 
-        // Read the tile magic identifier and reset the stream position
-        long oldPos = tileSource.Position;
-        byte[] tileMagic = new byte[4];
-        tileSource.Read(tileMagic);
-        tileSource.Seek(oldPos, SeekOrigin.Begin);
+        for (int i = 0; i < DDS_MAGIC_ID.Length; i++)
+        {
+            if (buffer[i] != DDS_MAGIC_ID[i])
+                return false;
+        }
 
-        return DDS_MAGIC_ID.SequenceEqual(tileMagic);
+        return true;
     }
 
-    /// <summary>
     /// <inheritdoc/>
-    /// Note that this operation does NOT complete asynchronously.
-    /// </summary>
     /// <remarks>Adapted from <see href="https://github.com/nickbabcock/Pfim/blob/master/src/Pfim.ImageSharp/Program.cs"/>.</remarks>
     /// <returns>An <see cref="Image{Bgra32}"/>.</returns>
-    public virtual Task<Image> LoadAsync(TileInfo tile, CancellationToken ct = default)
+    public virtual Image Load(ReadOnlySpan<byte> buffer)
     {
-        Stream tileSource = tile.DataSource;
+        byte[] tempBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length);
+
+        buffer.CopyTo(tempBuffer);
+        using MemoryStream ms = new(tempBuffer, 0, buffer.Length);
+
         PooledAllocator allocator = new();
         PfimConfig pfimConfig = new(allocator: allocator);
 
-        using Pfim.IImage image = Pfim.Pfim.FromStream(tileSource, pfimConfig);
+        using Pfim.IImage image = Pfim.Pfim.FromStream(ms, pfimConfig);
+        ArrayPool<byte>.Shared.Return(tempBuffer);
+
+        bool returnNewData = false;
         byte[] newData;
 
         // Since image sharp can't handle data with line padding in a stride
@@ -53,12 +52,11 @@ public class DdsTileLoaderService : ITileLoaderService
         int tightStride = image.Width * image.BitsPerPixel / 8;
         if (image.Stride != tightStride)
         {
-            newData = new byte[image.Height * tightStride];
+            newData = ArrayPool<byte>.Shared.Rent(image.Height * tightStride);
+            returnNewData = true;
+
             for (int i = 0; i < image.Height; i++)
             {
-                if (ct.IsCancellationRequested)
-                    throw new TaskCanceledException();
-
                 Buffer.BlockCopy(image.Data, i * image.Stride, newData, i * tightStride, tightStride);
             }
         }
@@ -67,8 +65,12 @@ public class DdsTileLoaderService : ITileLoaderService
             newData = image.Data;
         }
 
-        Image convertedImage = Image.LoadPixelData<Bgra32>(newData, image.Width, image.Height);
-        return Task.FromResult(convertedImage);
+        Image<Bgra32> result = Image.LoadPixelData<Bgra32>(newData, image.Width, image.Height);
+
+        if (returnNewData)
+            ArrayPool<byte>.Shared.Return(newData);
+
+        return result;
     }
 
     private class PooledAllocator : IImageAllocator
@@ -76,13 +78,9 @@ public class DdsTileLoaderService : ITileLoaderService
         private readonly ArrayPool<byte> _shared = ArrayPool<byte>.Shared;
 
         public byte[] Rent(int size)
-        {
-            return _shared.Rent(size);
-        }
+            => _shared.Rent(size);
 
         public void Return(byte[] data)
-        {
-            _shared.Return(data);
-        }
+            => _shared.Return(data);
     }
 }

@@ -1,6 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+using PS2MapTool.Abstractions.Services;
+using PS2MapTool.Abstractions.Tiles.Services;
 using PS2MapTool.Services;
 using PS2MapTool.Services.Abstractions;
+using PS2MapTool.Tiles.Services;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -16,7 +19,7 @@ public static class IServiceCollectionExtensions
         services.TryAddSingleton<IAreasService, AreasService>();
         services.TryAddSingleton<IDataLoaderService, DirectoryDataLoaderService>();
         services.TryAddSingleton<IImageCompressionService, IImageCompressionService>();
-        services.TryAddSingleton<IImageStitchService, ImageStitchService>();
+        services.TryAddSingleton<ITileStitchService, TileStitchService>();
 
         services.TryAddSingleton<DdsTileLoaderService>();
         services.TryAddSingleton<PngTileLoaderService>();
