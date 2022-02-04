@@ -7,9 +7,9 @@ A tool to create PlanetSide 2 continent maps from the data stored in the game as
 
 ## Usage
 
-1. Grab a copy of PS2MapTool from the [releases](https://github.com/carlst99/PS2MapTool/releases). Only Windows x64 binaries are available, although the code is platform-independent should you wish to compile it yourself for another platform.
+1. Grab a copy of PS2MapTool from the [releases](https://github.com/carlst99/PS2MapTool/releases/latest). Only Windows x64 binaries are available, although the code is platform-independent should you wish to compile it yourself for another platform.
 
-    1. There are two flavours of binaries - framework-dependent and self-contained. The former is much smaller in size (~3mb vs ~28mb) but requires you to have the [.NET 5 Runtime](https://dotnet.microsoft.com/download) installed.
+    1. There are two flavours of binaries - framework-dependent and self-contained. The former is much smaller in size (~3mb vs ~19mb) but requires you to have the [.NET 6 or greater Runtime](https://dotnet.microsoft.com/download) installed.
 
 2. Open your favourite terminal and run the following command in the directory you downloaded the binary to. The built-in help will guide you from here.
     ```
@@ -46,7 +46,7 @@ To form a map from the tiles, the following process is used
 
 ## No-deployment Zone Information
 
-No-deploy zones are found in the *area definition* files, which have the naming format `<World>Areas.xml`. These XML files define the area of effect of every world modifier, such as no-deploy zones or gravity lifts. Be aware when reading them that they break XML schema by having multiple root-level objects.
+No-deploy zones are found in the *area definition* files, which are stored in `data_x64_0.pack2` and have the naming format `<World>Areas.xml`. Be aware when reading them that they break XML schema by having multiple root-level objects.
 
 Here's an example XML object for a **no-deploy** area:
 
