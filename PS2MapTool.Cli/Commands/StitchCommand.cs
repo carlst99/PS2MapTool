@@ -40,7 +40,7 @@ public class StitchCommand : ICommand
     [CommandOption("output", 'o', Description = "The path to output the stitched map/s to.")]
     public string OutputPath { get; private set; }
 
-    [CommandOption("disable-compression", 'd', Description = "Prevents the stitched map/s from being compressed using OptiPNG. Saves a considerable amount of time at the expense of producing maps 40-50% larger in size.", IsRequired = false)]
+    [CommandOption("disable-compression", 'd', Description = "Prevents the stitched map/s from being compressed using OptiPNG. Saves a considerable amount of time at the expense of producing maps 30-40% larger in size.", IsRequired = false)]
     public bool DisableCompression { get; init; }
 
     [CommandOption("max-parallelism", 'p', Description = "The maximum amount of maps that may be stitched AND compressed in parallel. Lower values use less memory and CPU resources.", Validators = new Type[] { typeof(MaxParallelValidator) })]
@@ -83,21 +83,25 @@ public class StitchCommand : ICommand
             foreach (Lod lod in tileBucket.GetLods(world))
             {
                 _console.MarkupLine($"Stitching tiles for { Formatter.World(world) } at { Formatter.Lod(lod) }...");
-                IList<ITileDataSource> tiles = tileBucket.GetTiles(world, lod);
-                using Image<Rgba32> map = await _imageStitchService.StitchAsync(tiles, _ct).ConfigureAwait(false);
 
-                // Preemptively clean up tiles so we aren't holding on to more memory than necessary
-                foreach (ITileDataSource tile in tiles)
-                {
-                    if (tile is IDisposable disposable)
-                        disposable.Dispose();
-                }
-
-                // Save the stitched image.
-                _console.MarkupLine($"Saving { Formatter.World(world) } at { Formatter.Lod(lod) }...");
                 string outputFilePath = Path.Combine(OutputPath, $"{world}_{lod}.png");
-                map.SaveAsPng(outputFilePath);
-                _console.MarkupLine($"{ Formatter.Success("Completed") } saving { Formatter.World(world) } at { Formatter.Lod(lod) } to { Formatter.Path(outputFilePath) }");
+                IList<ITileDataSource> tiles = tileBucket.GetTiles(world, lod);
+
+                using (Image<Rgba32> map = await _imageStitchService.StitchAsync(tiles, _ct).ConfigureAwait(false))
+                {
+                    // Preemptively clean up tiles so we aren't holding on to more memory than necessary
+                    foreach (ITileDataSource tile in tiles)
+                    {
+                        if (tile is IDisposable disposable)
+                            disposable.Dispose();
+                    }
+
+                    // Save the stitched image.
+                    _console.MarkupLine($"Saving { Formatter.World(world) } at { Formatter.Lod(lod) }...");
+                    map.SaveAsPng(outputFilePath);
+
+                    _console.MarkupLine($"{ Formatter.Success("Completed") } saving { Formatter.World(world) } at { Formatter.Lod(lod) } to { Formatter.Path(outputFilePath) }");
+                }
 
                 if (!DisableCompression)
                 {

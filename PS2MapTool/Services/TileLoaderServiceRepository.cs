@@ -1,8 +1,7 @@
-﻿using PS2MapTool.Abstractions.Tiles;
-using PS2MapTool.Abstractions.Tiles.Services;
+﻿using PS2MapTool.Abstractions.Tiles.Services;
+using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PS2MapTool.Services;
 
@@ -21,20 +20,23 @@ public sealed class TileLoaderServiceRepository
     /// <summary>
     /// Tries to get a <see cref="ITileLoaderService"/> that can load tiles of the given format.
     /// </summary>
-    /// <param name="tile">The tile data to load.</param>
-    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
-    /// <returns>An applicable <see cref="ITileLoaderService"/>, or null if none can be used to load the given tile.</returns>
-    public async Task<ITileLoaderService?> TryGetAsync(ITileDataSource tile, CancellationToken ct = default)
+    /// <param name="buffer">The tile data to load.</param>
+    /// <param name="loader">A loader that can handle the give tile data, or null if no valid loaders were found.</param>
+    /// <returns>A value indicating whether or not a valid loader could be found.</returns>
+    public bool TryGet(ReadOnlySpan<byte> buffer, [NotNullWhen(true)] out ITileLoaderService? loader)
     {
-        foreach (ITileLoaderService loader in _repository)
-        {
-            bool canLoad = await loader.CanLoadAsync(tile, ct).ConfigureAwait(false);
+        loader = null;
 
-            if (canLoad)
-                return loader;
+        foreach (ITileLoaderService l in _repository)
+        {
+            if (l.CanLoad(buffer))
+            {
+                loader = l;
+                return true;
+            }
         }
 
-        return null;
+        return false;
     }
 
     public IReadOnlyList<ITileLoaderService> GetAll() => _repository.AsReadOnly();

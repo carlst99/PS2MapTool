@@ -1,4 +1,5 @@
-﻿using PS2MapTool.Abstractions.Tiles;
+﻿using CommunityToolkit.HighPerformance.Buffers;
+using PS2MapTool.Abstractions.Tiles;
 using PS2MapTool.Abstractions.Tiles.Services;
 using PS2MapTool.Services;
 using SixLabors.ImageSharp;
@@ -49,11 +50,12 @@ public class TileStitchService : ITileStitchService
         int x = 0, y = 0;
         foreach (ITileDataSource tile in orderedBucket)
         {
-            ITileLoaderService? loader = await _tileProcessorRepository.TryGetAsync(tile, ct).ConfigureAwait(false);
-            if (loader is null)
+            using MemoryOwner<byte> buffer = await tile.GetTileDataAsync(ct).ConfigureAwait(false);
+
+            if (!_tileProcessorRepository.TryGet(buffer.Span, out ITileLoaderService? loader))
                 throw new Exception($"The tile {tile.WorldName}Tile__{tile.X}_{tile.Y}_{tile.Lod} is an unknown image format.");
 
-            Image tileImage = await loader.LoadAsync(tile, ct).ConfigureAwait(false);
+            using Image tileImage = loader.Load(buffer.Span);
             tileImage.Mutate(o => o.Flip(FlipMode.Vertical));
 
             stitchedImage.Mutate(o => o.DrawImage(tileImage, new Point(x, y), 1f));
@@ -64,8 +66,6 @@ public class TileStitchService : ITileStitchService
                 x = 0;
                 y += TILE_SIZE;
             }
-
-            tileImage.Dispose();
 
             if (ct.IsCancellationRequested)
                 throw new TaskCanceledException();
