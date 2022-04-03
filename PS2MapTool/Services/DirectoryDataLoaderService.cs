@@ -6,10 +6,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System;
-using System.Runtime.CompilerServices;
 using Microsoft.Win32.SafeHandles;
-using CommunityToolkit.HighPerformance.Buffers;
 using PS2MapTool.Abstractions.Tiles;
+using System.Runtime.CompilerServices;
 
 namespace PS2MapTool.Services;
 
@@ -38,7 +37,12 @@ public class DirectoryDataLoaderService : IDataLoaderService
 
     /// <inheritdoc />
     /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
-    public virtual IAsyncEnumerable<ITileDataSource> GetTilesAsync(string worldName, Lod lod, CancellationToken ct = default)
+    public virtual async IAsyncEnumerable<ITileDataSource> GetTilesAsync
+    (
+        string worldName,
+        Lod lod,
+        [EnumeratorCancellation] CancellationToken ct = default
+    )
     {
         if (!Directory.Exists(_directory))
             throw new DirectoryNotFoundException("The supplied directory does not exist: " + _directory);
@@ -50,39 +54,34 @@ public class DirectoryDataLoaderService : IDataLoaderService
         };
 
         string searchPattern = worldName + $"_Tile_???_???_{lod}.*";
-        return TileIteratorAsync(ct);
-
-        async IAsyncEnumerable<FileTileDataSource> TileIteratorAsync([EnumeratorCancellation] CancellationToken ct)
+        foreach (string path in Directory.EnumerateFiles(_directory, searchPattern, enumerationOptions))
         {
-            foreach (string path in Directory.EnumerateFiles(_directory, searchPattern, enumerationOptions))
-            {
-                if (ct.IsCancellationRequested)
-                    throw new TaskCanceledException();
+            if (ct.IsCancellationRequested)
+                throw new TaskCanceledException();
 
-                bool canParseName = TileHelpers.TryParseName
-                (
-                    Path.GetFileName(path),
-                    out string? worldName,
-                    out int x,
-                    out int y,
-                    out Lod lod,
-                    out string? fileExtension
-                );
+            bool canParseName = TileHelpers.TryParseName
+            (
+                Path.GetFileName(path),
+                out string? tileWorldName,
+                out int x,
+                out int y,
+                out Lod tileLod,
+                out string? fileExtension
+            );
 
-                if (!canParseName)
-                    continue;
+            if (!canParseName)
+                continue;
 
-                SafeFileHandle outputHandle = File.OpenHandle
-                (
-                    path,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    FileShare.Read,
-                    FileOptions.Asynchronous
-                );
+            SafeFileHandle outputHandle = File.OpenHandle
+            (
+                path,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                FileOptions.Asynchronous
+            );
 
-                yield return new FileTileDataSource(worldName!, x, y, lod, fileExtension!, outputHandle);
-            }
+            yield return new FileTileDataSource(tileWorldName!, x, y, tileLod, fileExtension!, outputHandle);
         }
     }
 
@@ -96,26 +95,26 @@ public class DirectoryDataLoaderService : IDataLoaderService
 
         string fileName = worldName + "Areas.xml";
 
-        string? filePath = await Task.Run(() =>
-        {
-            if (_searchOption == SearchOption.AllDirectories)
+        string? filePath = await Task.Run
+        (
+            () =>
             {
-                return RecursiveFileSearch(fileName, _directory, ct);
-            }
-            else
-            {
+                if (_searchOption == SearchOption.AllDirectories)
+                    return RecursiveFileSearch(fileName, _directory, ct);
+
                 string path = Path.Combine(_directory, fileName);
-                if (File.Exists(path))
-                    return path;
-                else
-                    return null;
-            }
-        }, ct).ConfigureAwait(false);
+
+                return File.Exists(path)
+                    ? path
+                    : null;
+            },
+            ct
+        ).ConfigureAwait(false);
 
         if (filePath is null)
             throw new FileNotFoundException("The Areas file for this world could not be found.");
-        else
-            return new AreasSourceInfo(worldName, new FileStream(filePath, FileMode.Open, FileAccess.Read));
+
+        return new AreasSourceInfo(worldName, new FileStream(filePath, FileMode.Open, FileAccess.Read));
     }
 
     /// <summary>

@@ -44,5 +44,6 @@ public enum AssetZone
 
     Sanctuary,
     Tutorial,
-    VR
+    VR,
+    VRTutorial2
 }
