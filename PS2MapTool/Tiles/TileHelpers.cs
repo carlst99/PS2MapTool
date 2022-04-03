@@ -47,10 +47,10 @@ public static class TileHelpers
         if (!int.TryParse(nameComponents[tileComponentIndex++], out y))
             return false;
 
-        if (!Enum.TryParse(nameComponents[tileComponentIndex++], true, out lod))
+        if (!Enum.TryParse(nameComponents[tileComponentIndex], true, out lod))
             return false;
 
-        worldName = string.Join("_", nameComponents[0..worldNameEndIndex]);
+        worldName = string.Join("_", nameComponents[..worldNameEndIndex]);
 
         return true;
     }
