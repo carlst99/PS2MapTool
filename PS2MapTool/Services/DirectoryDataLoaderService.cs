@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using System;
 using System.Runtime.CompilerServices;
 using Microsoft.Win32.SafeHandles;
-using CommunityToolkit.HighPerformance.Buffers;
 using PS2MapTool.Abstractions.Tiles;
 
 namespace PS2MapTool.Services;
