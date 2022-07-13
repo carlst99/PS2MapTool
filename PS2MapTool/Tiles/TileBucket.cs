@@ -1,8 +1,6 @@
 ﻿using PS2MapTool.Abstractions.Tiles;
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace PS2MapTool.Tiles;
 
@@ -19,7 +17,7 @@ public class TileBucket : IDisposable
     public bool IsDisposed { get; private set; }
 
     /// <summary>
-    /// Initialises a new instance of the <see cref="WorldLodBucket"/> object.
+    /// Initialises a new instance of the <see cref="TileBucket"/> object.
     /// </summary>
     public TileBucket()
     {
@@ -50,12 +48,6 @@ public class TileBucket : IDisposable
     public void AddTiles(IEnumerable<ITileDataSource> tiles)
     {
         foreach (ITileDataSource tile in tiles)
-            AddTile(tile);
-    }
-
-    public async Task AddTilesAsync(IAsyncEnumerable<ITileDataSource> tiles, CancellationToken ct = default)
-    {
-        await foreach (ITileDataSource tile in tiles.WithCancellation(ct).ConfigureAwait(false))
             AddTile(tile);
     }
 

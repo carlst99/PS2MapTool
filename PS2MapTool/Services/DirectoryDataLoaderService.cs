@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using System;
 using Microsoft.Win32.SafeHandles;
 using PS2MapTool.Abstractions.Tiles;
-using System.Runtime.CompilerServices;
 
 namespace PS2MapTool.Services;
 
@@ -37,11 +36,11 @@ public class DirectoryDataLoaderService : IDataLoaderService
 
     /// <inheritdoc />
     /// <exception cref="DirectoryNotFoundException">Thrown when the supplied directory does not exist.</exception>
-    public virtual async IAsyncEnumerable<ITileDataSource> GetTilesAsync
+    public virtual Task<IReadOnlyList<ITileDataSource>> GetTilesAsync
     (
         string worldName,
         Lod lod,
-        [EnumeratorCancellation] CancellationToken ct = default
+        CancellationToken ct = default
     )
     {
         if (!Directory.Exists(_directory))
@@ -54,8 +53,12 @@ public class DirectoryDataLoaderService : IDataLoaderService
         };
 
         string searchPattern = worldName + $"_Tile_???_???_{lod}.*";
+        List<FileTileDataSource> tiles = new();
+
         foreach (string path in Directory.EnumerateFiles(_directory, searchPattern, enumerationOptions))
         {
+            ct.ThrowIfCancellationRequested();
+
             if (ct.IsCancellationRequested)
                 throw new TaskCanceledException();
 
@@ -80,9 +83,10 @@ public class DirectoryDataLoaderService : IDataLoaderService
                 FileShare.Read,
                 FileOptions.Asynchronous
             );
-
-            yield return new FileTileDataSource(tileWorldName!, x, y, tileLod, fileExtension!, outputHandle);
+            tiles.Add(new FileTileDataSource(tileWorldName!, x, y, tileLod, fileExtension!, outputHandle));
         }
+
+        return Task.FromResult((IReadOnlyList<ITileDataSource>)tiles);
     }
 
     /// <inheritdoc />

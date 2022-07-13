@@ -17,8 +17,8 @@ public interface IDataLoaderService
     /// <param name="worldName">The world to retrieve the map tiles of.</param>
     /// <param name="lod">The LOD to retrieve the map tiles of.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> used to cancel the tile enumeration.</param>
-    /// <returns>The tiles.</returns>
-    IAsyncEnumerable<ITileDataSource> GetTilesAsync(string worldName, Lod lod, CancellationToken ct = default);
+    /// <returns>The list of tiles.</returns>
+    Task<IReadOnlyList<ITileDataSource>> GetTilesAsync(string worldName, Lod lod, CancellationToken ct = default);
 
     /// <summary>
     /// Loads an <see cref="AreasSourceInfo"/> object from a data source.

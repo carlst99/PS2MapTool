@@ -34,15 +34,16 @@ public class PackDataLoaderService : IDataLoaderService
     }
 
     /// <inheritdoc />
-    public virtual async IAsyncEnumerable<ITileDataSource> GetTilesAsync
+    public virtual async Task<IReadOnlyList<ITileDataSource>> GetTilesAsync
     (
         string worldName,
         Lod lod,
-        [EnumeratorCancellation] CancellationToken ct = default
+        CancellationToken ct = default
     )
     {
         IEnumerable<string> worldPacks = Directory.EnumerateFiles(_packsLocation, worldName + "_x64_?.pack2");
         List<PackedTileInfo> infos = PregenPackedTileInfo(worldName);
+        List<Pack2TileDataSource> tiles = new();
 
         foreach (string worldPack in worldPacks)
         {
@@ -58,7 +59,7 @@ public class PackDataLoaderService : IDataLoaderService
                 if (tileInfo is null)
                     continue;
 
-                yield return new Pack2TileDataSource
+                Pack2TileDataSource tileSource = new
                 (
                     worldName,
                     tileInfo.X,
@@ -68,8 +69,11 @@ public class PackDataLoaderService : IDataLoaderService
                     worldPack,
                     assetHeader
                 );
+                tiles.Add(tileSource);
             }
         }
+
+        return tiles;
     }
 
     /// <inheritdoc />

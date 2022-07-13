@@ -43,7 +43,7 @@ public class StitchCommand : ICommand
     [CommandOption("disable-compression", 'd', Description = "Prevents the stitched map/s from being compressed using OptiPNG. Saves a considerable amount of time at the expense of producing maps 30-40% larger in size.", IsRequired = false)]
     public bool DisableCompression { get; init; }
 
-    [CommandOption("max-parallelism", 'p', Description = "The maximum amount of maps that may be stitched AND compressed in parallel. Lower values use less memory and CPU resources.", Validators = new Type[] { typeof(MaxParallelValidator) })]
+    [CommandOption("max-parallelism", 'p', Description = "The maximum amount of maps that may be stitched AND compressed in parallel. Lower values use less memory and CPU resources.", Validators = new[] { typeof(MaxParallelValidator) })]
     public int MaxParallelism { get; init; }
 
     [CommandOption("worlds", 'w', Description = "Limits map generation to the given worlds.")]
@@ -160,7 +160,7 @@ public class StitchCommand : ICommand
     }
 
     /// <summary>
-    /// Filters through all files in the source directory and sorts tiles into applicable <see cref="_worldLodBuckets"/>.
+    /// Filters through all files in the source directory and sorts tiles into a <see cref="TileBucket"/>.
     /// </summary>
     private async Task<TileBucket?> GetTileBucketAsync()
     {
@@ -171,8 +171,8 @@ public class StitchCommand : ICommand
         {
             foreach (Lod l in Lods!)
             {
-                IAsyncEnumerable<ITileDataSource> tiles = _dataLoader.GetTilesAsync(w.ToString(), l, _ct);
-                await bucket.AddTilesAsync(tiles, _ct);
+                IReadOnlyList<ITileDataSource> tiles = await _dataLoader.GetTilesAsync(w.ToString(), l, _ct);
+                bucket.AddTiles(tiles);
             }
         }
         _console.MarkupLine("\t " + Formatter.Success("Done"));
