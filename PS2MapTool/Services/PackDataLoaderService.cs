@@ -11,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,7 +41,7 @@ public class PackDataLoaderService : IDataLoaderService
     )
     {
         IEnumerable<string> worldPacks = Directory.EnumerateFiles(_packsLocation, worldName + "_x64_?.pack2");
-        List<PackedTileInfo> infos = PregenPackedTileInfo(worldName);
+        List<PackedTileInfo> infos = PregenPackedTileInfo(worldName, lod);
         List<Pack2TileDataSource> tiles = new();
 
         foreach (string worldPack in worldPacks)
@@ -92,33 +91,26 @@ public class PackDataLoaderService : IDataLoaderService
         return new AreasSourceInfo(worldName, areasData.AsStream());
     }
 
-    private List<PackedTileInfo> PregenPackedTileInfo(string worldName)
+    private static List<PackedTileInfo> PregenPackedTileInfo(string worldName, Lod lod)
     {
         List<PackedTileInfo> infos = new();
-        Lod[] lods = Enum.GetValues<Lod>();
+        int lodNum = (int)lod;
+        int increment = 4 * (int)Math.Pow(2, lodNum);
 
-        foreach (Lod lod in lods)
+        for (int x = -64; x < 64; x += increment)
         {
-            int lodNum = (int)lod;
-            int increment = (lodNum - 1) < 0
-                ? 4
-                : 4 * (int)Math.Pow(2, lodNum - 1);
-
-            for (int x = -64; x < 64; x += increment)
+            for (int y = -64; y < 64; y += increment)
             {
-                for (int y = -64; y < 64; y += increment)
-                {
-                    string xs = x > 0
-                        ? x.ToString("D3")
-                        : x.ToString("D2");
+                string xs = x >= 0
+                    ? x.ToString("D3")
+                    : x.ToString("D2");
 
-                    string ys = y > 0
-                        ? y.ToString("D3")
-                        : y.ToString("D2");
+                string ys = y >= 0
+                    ? y.ToString("D3")
+                    : y.ToString("D2");
 
-                    ulong nameHash = PackCrc64.Calculate($"{worldName}_Tile_{xs}_{ys}_LOD{lodNum}.dds");
+                ulong nameHash = PackCrc64.Calculate($"{worldName}_Tile_{xs}_{ys}_LOD{lodNum}.dds");
                     infos.Add(new PackedTileInfo(nameHash, x, y, lod));
-                }
             }
         }
 

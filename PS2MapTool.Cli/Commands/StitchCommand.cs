@@ -34,7 +34,7 @@ public class StitchCommand : ICommand
 
     #region Command Parameters/Options
 
-    [CommandParameter(0, Description = "The path to the directory containing the LOD tiles. Each tile should be named in the format <World>_Tile_<Y>_<X>_LOD*.")]
+    [CommandParameter(0, Description = "The path to the directory containing either pack2, OR pre-extracted LOD tiles.")]
     public string TilesSource { get; init; }
 
     [CommandOption("output", 'o', Description = "The path to output the stitched map/s to.")]
@@ -148,7 +148,11 @@ public class StitchCommand : ICommand
         }
 
         _ct = console.RegisterCancellationHandler();
-        _dataLoader = new DirectoryDataLoaderService(TilesSource, SearchOption.AllDirectories);
+
+        if (File.Exists(Path.Combine(TilesSource, "data_x64_0.pack2")))
+            _dataLoader = new PackDataLoaderService(TilesSource);
+        else
+            _dataLoader = new DirectoryDataLoaderService(TilesSource, SearchOption.AllDirectories);
 
         Worlds ??= Enum.GetValues<AssetZone>();
         Lods ??= Enum.GetValues<Lod>();
