@@ -1,8 +1,17 @@
-﻿using PS2MapTool.Abstractions.Services;
+﻿using CommunityToolkit.HighPerformance;
+using CommunityToolkit.HighPerformance.Buffers;
+using Mandible.Pack2;
+using Mandible.Services;
+using Mandible.Util;
+using PS2MapTool.Abstractions.Services;
 using PS2MapTool.Abstractions.Tiles;
 using PS2MapTool.Areas;
+using PS2MapTool.Tiles;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,18 +31,95 @@ public class PackDataLoaderService : IDataLoaderService
     public PackDataLoaderService(string packsPath)
     {
         _packsLocation = packsPath;
-        throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public virtual IAsyncEnumerable<ITileDataSource> GetTilesAsync(string worldName, Lod lod, CancellationToken ct = default)
+    public virtual async IAsyncEnumerable<ITileDataSource> GetTilesAsync
+    (
+        string worldName,
+        Lod lod,
+        [EnumeratorCancellation] CancellationToken ct = default
+    )
     {
-        throw new NotImplementedException();
+        IEnumerable<string> worldPacks = Directory.EnumerateFiles(_packsLocation, worldName + "_x64_?.pack2");
+        List<PackedTileInfo> infos = PregenPackedTileInfo(worldName);
+
+        foreach (string worldPack in worldPacks)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            using RandomAccessDataReaderService radrs = new(worldPack);
+            using Pack2Reader reader = new(radrs);
+
+            IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
+            foreach (Asset2Header assetHeader in assetHeaders)
+            {
+                PackedTileInfo? tileInfo = infos.FirstOrDefault(ti => ti.NameHash == assetHeader.NameHash);
+                if (tileInfo is null)
+                    continue;
+
+                yield return new Pack2TileDataSource
+                (
+                    worldName,
+                    tileInfo.X,
+                    tileInfo.Y,
+                    tileInfo.lod,
+                    ".dds",
+                    worldPack,
+                    assetHeader
+                );
+            }
+        }
     }
 
     /// <inheritdoc />
-    public virtual Task<AreasSourceInfo> GetAreasAsync(string worldName, CancellationToken ct = default)
+    public virtual async Task<AreasSourceInfo> GetAreasAsync(string worldName, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        using RandomAccessDataReaderService radrs = new(Path.Combine(_packsLocation, "data_x64_0.pack2"));
+        using Pack2Reader reader = new(radrs);
+
+        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
+        ulong areasFileNameHash = PackCrc64.Calculate(worldName + "Areas.xml");
+        Asset2Header? areasFileHeader = assetHeaders.FirstOrDefault(a => a.NameHash == areasFileNameHash);
+        if (areasFileHeader is null)
+            throw new FileNotFoundException("Could not find an areas file for the given world");
+
+        using MemoryOwner<byte> areasData = await reader.ReadAssetDataAsync(areasFileHeader, ct).ConfigureAwait(false);
+        return new AreasSourceInfo(worldName, areasData.AsStream());
     }
+
+    private List<PackedTileInfo> PregenPackedTileInfo(string worldName)
+    {
+        List<PackedTileInfo> infos = new();
+        Lod[] lods = Enum.GetValues<Lod>();
+
+        foreach (Lod lod in lods)
+        {
+            int lodNum = (int)lod;
+            int increment = (lodNum - 1) < 0
+                ? 4
+                : 4 * (int)Math.Pow(2, lodNum - 1);
+
+            for (int x = -64; x < 64; x += increment)
+            {
+                for (int y = -64; y < 64; y += increment)
+                {
+                    string xs = x > 0
+                        ? x.ToString("D3")
+                        : x.ToString("D2");
+
+                    string ys = y > 0
+                        ? y.ToString("D3")
+                        : y.ToString("D2");
+
+                    ulong nameHash = PackCrc64.Calculate($"{worldName}_Tile_{xs}_{ys}_LOD{lodNum}.dds");
+                    infos.Add(new PackedTileInfo(nameHash, x, y, lod));
+                }
+            }
+        }
+
+        return infos;
+    }
+
+    private record PackedTileInfo(ulong NameHash, int X, int Y, Lod lod);
 }
