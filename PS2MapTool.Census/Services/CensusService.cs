@@ -14,7 +14,7 @@ public class CensusService : ICensusService
     /// <summary>
     /// The maximum number of elements to return with each query.
     /// </summary>
-    protected const uint PAGE_LIMIT = 500;
+    protected const int PAGE_LIMIT = 500;
 
     protected readonly IQueryService _queryService;
 
@@ -60,7 +60,7 @@ public class CensusService : ICensusService
     protected async Task<List<T>> GetEntireCollection<T>(IQueryBuilder query, CancellationToken ct = default)
     {
         List<T> elements = new();
-        uint startAt = 0;
+        int startAt = 0;
         query.WithLimit(PAGE_LIMIT);
 
         do
