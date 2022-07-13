@@ -29,7 +29,7 @@ public class AreasCommand : ICommand
 
     #region Command Options/Parameters
 
-    [CommandParameter(0, Description = "The directory containing an areas file. Areas files should be named in the format <World>Areas.xml")]
+    [CommandParameter(0, Description = "The directory containing either pack2, OR pre-extracted Areas files.")]
     public string AreasFileSource { get; init; }
 
     [CommandOption('o', Description = "The path to output the compiled no-deploy-zone images to.")]
@@ -62,7 +62,7 @@ public class AreasCommand : ICommand
 
         foreach (AssetZone world in Worlds!)
         {
-            AreasSourceInfo? areasSourceInfo = null;
+            AreasSourceInfo areasSourceInfo;
             try
             {
                 areasSourceInfo = await _dataLoaderService.GetAreasAsync(world.ToString(), _ct).ConfigureAwait(false);
@@ -75,7 +75,7 @@ public class AreasCommand : ICommand
 
             foreach (NoDeployType type in NoDeployTypes!)
             {
-                IList<AreaDefinition> noDeployZones = await _areasService.GetNoDeployAreasAsync(areasSourceInfo!, type, _ct).ConfigureAwait(false);
+                IList<AreaDefinition> noDeployZones = await _areasService.GetNoDeployAreasAsync(areasSourceInfo, type, _ct).ConfigureAwait(false);
                 if (noDeployZones.Count == 0)
                 {
                     _console.MarkupLine(Formatter.Warning($"The areas file for { Formatter.World(world) } does not contain any no-deploy-zones of the type { Formatter.NdzType(type) }."));
@@ -124,7 +124,11 @@ public class AreasCommand : ICommand
         }
 
         _ct = console.RegisterCancellationHandler();
-        _dataLoaderService = new DirectoryDataLoaderService(AreasFileSource, SearchOption.AllDirectories);
+
+        if (File.Exists(Path.Combine(AreasFileSource, "data_x64_0.pack2")))
+            _dataLoaderService = new PackDataLoaderService(AreasFileSource);
+        else
+            _dataLoaderService = new DirectoryDataLoaderService(AreasFileSource, SearchOption.AllDirectories);
 
         Worlds ??= Enum.GetValues<AssetZone>();
         Lods ??= Enum.GetValues<Lod>();
