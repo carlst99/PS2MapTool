@@ -34,7 +34,7 @@ public class CensusService : ICensusService
             .OnCollection("facility_link")
             .Where("zone_id", SearchModifier.Equals, (int)zone);
 
-        return await GetEntireCollection<LatticeLink>(query, ct).ConfigureAwait(false);
+        return await GetEntireCollection<LatticeLink>(query, ct);
     }
 
     /// <inheritdoc />
@@ -44,7 +44,7 @@ public class CensusService : ICensusService
             .OnCollection("map_hex")
             .Where("zone_id", SearchModifier.Equals, (int)zone);
 
-        return await GetEntireCollection<MapHex>(query, ct).ConfigureAwait(false);
+        return await GetEntireCollection<MapHex>(query, ct);
     }
 
     /// <inheritdoc />
@@ -54,7 +54,7 @@ public class CensusService : ICensusService
             .OnCollection("map_region")
             .Where("zone_id", SearchModifier.Equals, (int)zone);
 
-        return await GetEntireCollection<MapRegion>(query, ct).ConfigureAwait(false);
+        return await GetEntireCollection<MapRegion>(query, ct);
     }
 
     protected async Task<List<T>> GetEntireCollection<T>(IQueryBuilder query, CancellationToken ct = default)
@@ -66,7 +66,7 @@ public class CensusService : ICensusService
         do
         {
             query.WithStartIndex(startAt);
-            List<T>? tempElements = await _queryService.GetAsync<List<T>>(query, ct).ConfigureAwait(false);
+            List<T>? tempElements = await _queryService.GetAsync<List<T>>(query, ct);
 
             if (tempElements is not null)
                 elements.AddRange(tempElements);

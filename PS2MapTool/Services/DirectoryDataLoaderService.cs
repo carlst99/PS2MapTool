@@ -113,7 +113,7 @@ public class DirectoryDataLoaderService : IDataLoaderService
                     : null;
             },
             ct
-        ).ConfigureAwait(false);
+        );
 
         if (filePath is null)
             throw new FileNotFoundException("The Areas file for this world could not be found.");

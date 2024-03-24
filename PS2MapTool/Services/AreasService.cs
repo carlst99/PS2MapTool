@@ -35,7 +35,7 @@ public class AreasService : IAreasService
         };
         using XmlReader reader = XmlReader.Create(areasSourceInfo.DataSource, xmlSettings);
 
-        while (await reader.ReadAsync().ConfigureAwait(false))
+        while (await reader.ReadAsync())
         {
             if (ct.IsCancellationRequested)
                 throw new TaskCanceledException();
@@ -87,7 +87,7 @@ public class AreasService : IAreasService
             ndzImage.Mutate(x => x.Rotate(RotateMode.Rotate270));
         }, ct, TaskCreationOptions.LongRunning);
         t.Start();
-        await t.ConfigureAwait(false);
+        await t;
 
         return ndzImage;
     }

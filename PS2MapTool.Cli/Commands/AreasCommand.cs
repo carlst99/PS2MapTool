@@ -65,7 +65,7 @@ public class AreasCommand : ICommand
             AreasSourceInfo areasSourceInfo;
             try
             {
-                areasSourceInfo = await _dataLoaderService.GetAreasAsync(world.ToString(), _ct).ConfigureAwait(false);
+                areasSourceInfo = await _dataLoaderService.GetAreasAsync(world.ToString(), _ct);
             }
             catch (FileNotFoundException)
             {
@@ -75,7 +75,7 @@ public class AreasCommand : ICommand
 
             foreach (NoDeployType type in NoDeployTypes!)
             {
-                IList<AreaDefinition> noDeployZones = await _areasService.GetNoDeployAreasAsync(areasSourceInfo, type, _ct).ConfigureAwait(false);
+                IList<AreaDefinition> noDeployZones = await _areasService.GetNoDeployAreasAsync(areasSourceInfo, type, _ct);
                 if (noDeployZones.Count == 0)
                 {
                     _console.MarkupLine(Formatter.Warning($"The areas file for { Formatter.World(world) } does not contain any no-deploy-zones of the type { Formatter.NdzType(type) }."));
@@ -86,10 +86,10 @@ public class AreasCommand : ICommand
                 {
                     _console.MarkupLine($"Creating { Formatter.NdzType(type) } no-deploy-zone image for { Formatter.World(world) } at { Formatter.Lod(lod) }...");
 
-                    using Image ndzImage = await _areasService.CreateNoDeployZoneImageAsync(noDeployZones, lod, _ct).ConfigureAwait(false);
+                    using Image ndzImage = await _areasService.CreateNoDeployZoneImageAsync(noDeployZones, lod, _ct);
 
                     string outputPath = Path.Combine(OutputPath, $"{world}_{type}_{lod}.png");
-                    await ndzImage.SaveAsPngAsync(outputPath, _ct).ConfigureAwait(false);
+                    await ndzImage.SaveAsPngAsync(outputPath, _ct);
 
                     _console.MarkupLine($"Image saved to { Formatter.Path(outputPath) }");
                 }

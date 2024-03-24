@@ -36,7 +36,7 @@ public record FileTileDataSource
     public async Task<MemoryOwner<byte>> GetTileDataAsync(CancellationToken ct = default)
     {
         MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate((int)RandomAccess.GetLength(DataSource));
-        await RandomAccess.ReadAsync(DataSource, buffer.Memory, 0, ct).ConfigureAwait(false);
+        await RandomAccess.ReadAsync(DataSource, buffer.Memory, 0, ct);
 
         return buffer;
     }

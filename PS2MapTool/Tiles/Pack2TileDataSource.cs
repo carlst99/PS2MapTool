@@ -33,7 +33,7 @@ public record Pack2TileDataSource
     {
         using RandomAccessDataReaderService radrs = new(PackPath);
         using Pack2Reader reader = new(radrs);
-        return await reader.ReadAssetDataAsync(TileHeader, ct).ConfigureAwait(false);
+        return await reader.ReadAssetDataAsync(TileHeader, ct: ct);
     }
 
     public override string ToString()

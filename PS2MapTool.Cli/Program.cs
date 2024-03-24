@@ -12,5 +12,5 @@ public static class Program
             .AddCommandsFromThisAssembly()
             .Build()
             .RunAsync()
-            .ConfigureAwait(false);
+            ;
 }

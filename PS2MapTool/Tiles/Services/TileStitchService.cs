@@ -50,7 +50,7 @@ public class TileStitchService : ITileStitchService
         int x = 0, y = 0;
         foreach (ITileDataSource tile in orderedBucket)
         {
-            using MemoryOwner<byte> buffer = await tile.GetTileDataAsync(ct).ConfigureAwait(false);
+            using MemoryOwner<byte> buffer = await tile.GetTileDataAsync(ct);
 
             if (!_tileProcessorRepository.TryGet(buffer.Span, out ITileLoaderService? loader))
                 throw new Exception($"The tile {tile.WorldName}Tile__{tile.X}_{tile.Y}_{tile.Lod} is an unknown image format.");

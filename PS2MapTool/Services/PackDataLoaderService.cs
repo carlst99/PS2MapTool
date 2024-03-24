@@ -51,7 +51,7 @@ public class PackDataLoaderService : IDataLoaderService
             using RandomAccessDataReaderService radrs = new(worldPack);
             using Pack2Reader reader = new(radrs);
 
-            IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
+            IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct);
             foreach (Asset2Header assetHeader in assetHeaders)
             {
                 PackedTileInfo? tileInfo = infos.FirstOrDefault(ti => ti.NameHash == assetHeader.NameHash);
@@ -81,13 +81,13 @@ public class PackDataLoaderService : IDataLoaderService
         using RandomAccessDataReaderService radrs = new(Path.Combine(_packsLocation, "data_x64_0.pack2"));
         using Pack2Reader reader = new(radrs);
 
-        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
+        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct);
         ulong areasFileNameHash = PackCrc64.Calculate(worldName + "Areas.xml");
         Asset2Header? areasFileHeader = assetHeaders.FirstOrDefault(a => a.NameHash == areasFileNameHash);
         if (areasFileHeader is null)
             throw new FileNotFoundException("Could not find an areas file for the given world");
 
-        using MemoryOwner<byte> areasData = await reader.ReadAssetDataAsync(areasFileHeader, ct).ConfigureAwait(false);
+        using MemoryOwner<byte> areasData = await reader.ReadAssetDataAsync(areasFileHeader, ct: ct);
         return new AreasSourceInfo(worldName, areasData.AsStream());
     }
 

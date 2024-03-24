@@ -95,7 +95,7 @@ public class StitchCommand : ICommand
                     string outputFilePath = Path.Combine(OutputPath, $"{world}_{lod}.png");
                     IList<ITileDataSource> tiles = tileBucket.GetTiles(world, lod);
 
-                    using (Image<Rgba32> map = await _imageStitchService.StitchAsync(tiles, ct).ConfigureAwait(false))
+                    using (Image<Rgba32> map = await _imageStitchService.StitchAsync(tiles, ct))
                     {
                         // Preemptively clean up tiles so we aren't holding on to more memory than necessary
                         foreach (ITileDataSource tile in tiles)
@@ -114,7 +114,7 @@ public class StitchCommand : ICommand
                     if (!DisableCompression)
                     {
                         _console.MarkupLine($"Compressing { Formatter.World(world) } at { Formatter.Lod(lod) }...");
-                        await _compressionService.CompressAsync(outputFilePath, ct).ConfigureAwait(false);
+                        await _compressionService.CompressAsync(outputFilePath, ct);
                         _console.MarkupLine($"{ Formatter.Success("Completed") } compressing { Formatter.World(world) } at { Formatter.Lod(lod) }");
                     }
                 }

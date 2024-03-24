@@ -41,7 +41,7 @@ public class DdsTileLoaderService : ITileLoaderService
         PooledAllocator allocator = new();
         PfimConfig pfimConfig = new(allocator: allocator);
 
-        using Pfim.IImage image = Pfim.Pfim.FromStream(ms, pfimConfig);
+        using IImage image = Pfimage.FromStream(ms, pfimConfig);
         ArrayPool<byte>.Shared.Return(tempBuffer);
 
         bool returnNewData = false;
