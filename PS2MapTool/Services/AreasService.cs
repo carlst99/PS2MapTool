@@ -1,5 +1,5 @@
-﻿using PS2MapTool.Areas;
-using PS2MapTool.Services.Abstractions;
+﻿using PS2MapTool.Abstractions.Services;
+using PS2MapTool.Areas;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing;
 using SixLabors.ImageSharp.Drawing.Processing;
