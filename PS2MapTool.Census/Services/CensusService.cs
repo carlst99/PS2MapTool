@@ -3,6 +3,7 @@ using DbgCensus.Rest.Abstractions.Queries;
 using PS2MapTool.Census.Models;
 using PS2MapTool.Census.Services.Abstractions;
 using System.Collections.Generic;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,7 +35,12 @@ public class CensusService : ICensusService
             .OnCollection("facility_link")
             .Where("zone_id", SearchModifier.Equals, (int)zone);
 
-        return await GetEntireCollection<LatticeLink>(query, ct);
+        return await GetEntireCollection<IEnumerable<LatticeLink>, LatticeLink>
+        (
+            query,
+            JsonContext.Default.IEnumerableLatticeLink,
+            ct
+        );
     }
 
     /// <inheritdoc />
@@ -44,7 +50,12 @@ public class CensusService : ICensusService
             .OnCollection("map_hex")
             .Where("zone_id", SearchModifier.Equals, (int)zone);
 
-        return await GetEntireCollection<MapHex>(query, ct);
+        return await GetEntireCollection<IEnumerable<MapHex>, MapHex>
+        (
+            query,
+            JsonContext.Default.IEnumerableMapHex,
+            ct
+        );
     }
 
     /// <inheritdoc />
@@ -54,26 +65,25 @@ public class CensusService : ICensusService
             .OnCollection("map_region")
             .Where("zone_id", SearchModifier.Equals, (int)zone);
 
-        return await GetEntireCollection<MapRegion>(query, ct);
+        return await GetEntireCollection<IEnumerable<MapRegion>, MapRegion>
+        (
+            query,
+            JsonContext.Default.IEnumerableMapRegion,
+            ct
+        );
     }
 
-    protected async Task<List<T>> GetEntireCollection<T>(IQueryBuilder query, CancellationToken ct = default)
+    protected async Task<List<TElement>> GetEntireCollection<T, TElement>
+    (
+        IQueryBuilder query,
+        JsonTypeInfo<T> typeInfo,
+        CancellationToken ct = default
+    ) where T : IEnumerable<TElement>
     {
-        List<T> elements = new();
-        int startAt = 0;
-        query.WithLimit(PAGE_LIMIT);
+        List<TElement> elements = [];
 
-        do
-        {
-            query.WithStartIndex(startAt);
-            List<T>? tempElements = await _queryService.GetAsync<List<T>>(query, ct);
-
-            if (tempElements is not null)
-                elements.AddRange(tempElements);
-
-            startAt += PAGE_LIMIT;
-        }
-        while (elements.Count == startAt);
+        await foreach (T element in _queryService.GetPaginatedAsync<T, TElement>(query, PAGE_LIMIT, typeInfo, ct: ct))
+            elements.AddRange(element);
 
         return elements;
     }
