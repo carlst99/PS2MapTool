@@ -1,8 +1,8 @@
 ﻿using DbgCensus.Rest.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using PS2MapTool.Census.Abstractions.Services;
 using PS2MapTool.Census.Services;
-using PS2MapTool.Census.Services.Abstractions;
 
 namespace PS2MapTool.Census.Extensions;
 

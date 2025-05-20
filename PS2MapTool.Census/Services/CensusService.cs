@@ -1,7 +1,7 @@
 ﻿using DbgCensus.Rest.Abstractions;
 using DbgCensus.Rest.Abstractions.Queries;
+using PS2MapTool.Census.Abstractions.Services;
 using PS2MapTool.Census.Models;
-using PS2MapTool.Census.Services.Abstractions;
 using System.Collections.Generic;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading;

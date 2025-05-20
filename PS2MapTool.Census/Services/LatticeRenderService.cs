@@ -1,4 +1,4 @@
-﻿using PS2MapTool.Census.Services.Abstractions;
+﻿using PS2MapTool.Census.Abstractions.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;

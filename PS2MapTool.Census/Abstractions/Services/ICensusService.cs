@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PS2MapTool.Census.Services.Abstractions;
+namespace PS2MapTool.Census.Abstractions.Services;
 
 /// <summary>
 /// Provides methods to retrieve data from the Census API.
