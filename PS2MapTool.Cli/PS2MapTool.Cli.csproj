@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CliFx" Version="2.3.6" />
-    <PackageReference Include="Spectre.Console" Version="0.51.1" />
+    <PackageReference Include="CliFx" Version="3.0.0" />
+    <PackageReference Include="Spectre.Console" Version="0.57.2" />
   </ItemGroup>
 
   <ItemGroup>
