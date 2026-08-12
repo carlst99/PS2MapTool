@@ -7,7 +7,7 @@ public static class Program
 {
     public static async Task<int> Main()
     {
-        return await new CliApplicationBuilder()
+        return await new CommandLineApplicationBuilder()
             .SetDescription("A tool to extract and stitch together PlanetSide 2 maps and no-deploy zones.")
             .SetTitle("PS2 Map Tools")
             .AddCommandsFromThisAssembly()

@@ -1,6 +1,5 @@
 ﻿using CliFx;
-using CliFx.Attributes;
-using CliFx.Exceptions;
+using CliFx.Binding;
 using CliFx.Infrastructure;
 using PS2MapTool.Abstractions.Services;
 using PS2MapTool.Areas;
@@ -10,6 +9,7 @@ using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,22 +17,20 @@ using System.Threading.Tasks;
 namespace PS2MapTool.Cli.Commands;
 
 [Command("areas", Description = "Extract no-deploy zones.")]
-public class AreasCommand : ICommand
+public partial class AreasCommand : ICommand
 {
-    private readonly Stopwatch _stopwatch;
-    private readonly IAreasService _areasService;
+    private readonly Stopwatch _stopwatch = new();
+    private readonly AreasService _areasService = new();
 
-    private IDataLoaderService _dataLoaderService;
-    private IAnsiConsole _console;
+    private IDataLoaderService _dataLoaderService = null!;
+    private IAnsiConsole _console = null!;
     private CancellationToken _ct;
 
-    #region Command Options/Parameters
-
     [CommandParameter(0, Description = "The directory containing either pack2, OR pre-extracted Areas files.")]
-    public string AreasFileSource { get; init; }
+    public required string AreasFileSource { get; set; }
 
     [CommandOption('o', Description = "The path to output the compiled no-deploy-zone images to.")]
-    public string OutputPath { get; set; }
+    public string? OutputPath { get; set; }
 
     [CommandOption("worlds", 'w', Description = "Limits no-deploy-zone generation to the given worlds.")]
     public IReadOnlyList<AssetZone>? Worlds { get; set; }
@@ -42,17 +40,6 @@ public class AreasCommand : ICommand
 
     [CommandOption("ndz-type", 't', Description = "Limits the type of no-deploy-zones that are generated to the given types.")]
     public IReadOnlyList<NoDeployType>? NoDeployTypes { get; set; }
-
-    #endregion
-
-    public AreasCommand()
-    {
-        _stopwatch = new Stopwatch();
-        _areasService = new AreasService();
-
-        AreasFileSource = string.Empty;
-        OutputPath = string.Empty;
-    }
 
     public async ValueTask ExecuteAsync(IConsole console)
     {
@@ -101,6 +88,7 @@ public class AreasCommand : ICommand
         _stopwatch.Reset();
     }
 
+    [MemberNotNull(nameof(OutputPath))]
     private void Setup(IConsole console)
     {
         if (!Directory.Exists(AreasFileSource))
@@ -108,7 +96,7 @@ public class AreasCommand : ICommand
 
         if (string.IsNullOrWhiteSpace(OutputPath))
         {
-            OutputPath = AreasFileSource;
+            OutputPath = Directory.GetCurrentDirectory();
         }
         else if (!Directory.Exists(OutputPath))
         {

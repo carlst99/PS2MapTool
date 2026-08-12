@@ -1,10 +1,8 @@
 ﻿using CliFx;
-using CliFx.Attributes;
-using CliFx.Exceptions;
+using CliFx.Binding;
 using CliFx.Infrastructure;
 using PS2MapTool.Abstractions.Services;
 using PS2MapTool.Abstractions.Tiles;
-using PS2MapTool.Abstractions.Tiles.Services;
 using PS2MapTool.Cli.Validators;
 using PS2MapTool.Services;
 using PS2MapTool.Tiles;
@@ -15,36 +13,41 @@ using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace PS2MapTool.Cli.Commands;
 
-[Command("stitch", Description = "Stitch LOD tiles together to form a complete map. Maps will be created for all World/LOD combinations found in the source directory, unless otherwise specified.")]
-public class StitchCommand : ICommand
+[Command("stitch",
+    Description = "Stitch LOD tiles together to form a complete map. Maps will be created for all World/LOD combinations found in the source directory, unless otherwise specified.")]
+public partial class StitchCommand : ICommand
 {
-    private readonly Stopwatch _stopwatch;
-    private readonly ITileStitchService _imageStitchService;
-    private readonly IImageCompressionService _compressionService;
+    private readonly Stopwatch _stopwatch = new();
+    private readonly TileStitchService _imageStitchService;
+    private readonly OptiPngCompressionService _compressionService = new();
 
-    private IDataLoaderService _dataLoader;
-    private IAnsiConsole _console;
+    private IDataLoaderService _dataLoader = null!;
+    private IAnsiConsole _console = null!;
     private CancellationToken _ct;
 
-    #region Command Parameters/Options
-
     [CommandParameter(0, Description = "The path to the directory containing either pack2, OR pre-extracted LOD tiles.")]
-    public string TilesSource { get; init; }
+    public required string TilesSource { get; set; }
 
     [CommandOption("output", 'o', Description = "The path to output the stitched map/s to.")]
-    public string OutputPath { get; private set; }
+    public string? OutputPath { get; set; }
 
-    [CommandOption("disable-compression", 'd', Description = "Prevents the stitched map/s from being compressed using OptiPNG. Saves a considerable amount of time at the expense of producing maps 30-40% larger in size.", IsRequired = false)]
-    public bool DisableCompression { get; init; }
+    [CommandOption("disable-compression",
+        'd',
+        Description = "Prevents the stitched map/s from being compressed using OptiPNG. Saves a considerable amount of time at the expense of producing maps 30-40% larger in size.")]
+    public bool DisableCompression { get; set; }
 
-    [CommandOption("max-parallelism", 'p', Description = "The maximum amount of maps that may be stitched AND compressed in parallel. Lower values use less memory and CPU resources.", Validators = new[] { typeof(MaxParallelValidator) })]
-    public int MaxParallelism { get; init; }
+    [CommandOption("max-parallelism",
+        'p',
+        Description = "The maximum amount of maps that may be stitched AND compressed in parallel. Lower values use less memory and CPU resources.",
+        Validators = [typeof(MaxParallelValidator)])]
+    public int MaxParallelism { get; set; } = 1;
 
     [CommandOption("worlds", 'w', Description = "Limits map generation to the given worlds.")]
     public IReadOnlyList<AssetZone>? Worlds { get; set; }
@@ -52,21 +55,10 @@ public class StitchCommand : ICommand
     [CommandOption("lods", 'l', Description = "Limits map generation to the given LODs")]
     public IReadOnlyList<Lod>? Lods { get; set; }
 
-    #endregion
-
     public StitchCommand()
     {
-        _stopwatch = new Stopwatch();
-        _compressionService = new OptiPngCompressionService();
-
-        TileLoaderServiceRepository repo = new();
-        repo.Add(new DdsTileLoaderService());
-        repo.Add(new PngTileLoaderService());
+        TileLoaderServiceRepository repo = new(new DdsTileLoaderService(), new PngTileLoaderService());
         _imageStitchService = new TileStitchService(repo);
-
-        TilesSource = string.Empty;
-        OutputPath = string.Empty;
-        MaxParallelism = 4;
     }
 
     public async ValueTask ExecuteAsync(IConsole console)
@@ -126,6 +118,7 @@ public class StitchCommand : ICommand
         _stopwatch.Reset();
     }
 
+    [MemberNotNull(nameof(OutputPath))]
     private void Setup(IConsole console)
     {
         if (!Directory.Exists(TilesSource))
@@ -133,7 +126,7 @@ public class StitchCommand : ICommand
 
         if (string.IsNullOrWhiteSpace(OutputPath))
         {
-            OutputPath = TilesSource;
+            OutputPath = Directory.GetCurrentDirectory();
         }
         else if (!Directory.Exists(OutputPath))
         {
@@ -187,9 +180,8 @@ public class StitchCommand : ICommand
 
         _console.WriteLine();
 
-        if (_console.Confirm("Continue?"))
-            return bucket;
-        else
-            return null;
+        return await _console.ConfirmAsync("Continue?", cancellationToken: _ct)
+            ? bucket
+            : null;
     }
 }
