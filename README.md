@@ -75,7 +75,7 @@ The `Requirement` attribute is used to differentiate, with the current values be
 PS2MapTool makes use of the following libraries:
 
 - [CliFx](https://github.com/Tyrrrz/CliFx)
-- [Mandible](https://github.com/carlst99/Mandible)
+- [Mandible](https://github.com/PS2Sanctuary/Mandible)
 - [Pfim](https://github.com/nickbabcock/Pfim)
 - [ImageSharp](https://github.com/SixLabors/ImageSharp)
 - [Spectre.Console](https://github.com/spectreconsole/spectre.console)
