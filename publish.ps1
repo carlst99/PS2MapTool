@@ -19,6 +19,7 @@ function New-MapToolArchive
 $currDir = Get-location
 Set-Location ".\PS2MapTool.Cli"
 
+Remove-Item ".\bin\Publish\raw\*"
 dotnet publish -o ".\bin\Publish\raw" --self-contained -r win-x64 -p:PublishSingleFile=true -p:PublishAot=true -c Release
 if (-not $?)
 {
