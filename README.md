@@ -26,7 +26,7 @@ A tool to create PlanetSide 2 continent maps from the data stored in the game as
 ### Map Asset Extraction
 
 IN SOME cases, you may first need to extract the map data from game assets, using a tool like
-[Mandible](https://github.com/carlst99/Mandible).
+[Mandible](https://github.com/PS2Sanctuary/Mandible).
 
 Game assets (`*.pack2` files) are found in the PlanetSide installation folder (`...\PlanetSide 2\Resources\Assets`).
 
