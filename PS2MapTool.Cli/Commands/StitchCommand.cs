@@ -38,11 +38,6 @@ public partial class StitchCommand : ICommand
     [CommandOption("output", 'o', Description = "The path to output the stitched map/s to.")]
     public string? OutputPath { get; set; }
 
-    [CommandOption("disable-compression",
-        'd',
-        Description = "Prevents the stitched map/s from being compressed using OptiPNG. Saves a considerable amount of time at the expense of producing maps 30-40% larger in size.")]
-    public bool DisableCompression { get; set; }
-
     [CommandOption("max-parallelism",
         'p',
         Description = "The maximum amount of maps that may be stitched AND compressed in parallel. Lower values use less memory and CPU resources.",
@@ -110,13 +105,6 @@ public partial class StitchCommand : ICommand
                         );
 
                         _console.MarkupLine($"{ Formatter.Success("Completed") } saving { Formatter.World(world) } at { Formatter.Lod(lod) } to { Formatter.Path(outputFilePath) }");
-                    }
-
-                    if (!DisableCompression)
-                    {
-                        _console.MarkupLine($"Compressing { Formatter.World(world) } at { Formatter.Lod(lod) }...");
-                        await _compressionService.CompressAsync(outputFilePath, ct);
-                        _console.MarkupLine($"{ Formatter.Success("Completed") } compressing { Formatter.World(world) } at { Formatter.Lod(lod) }");
                     }
                 }
             );

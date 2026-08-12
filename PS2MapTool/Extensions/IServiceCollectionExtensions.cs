@@ -17,7 +17,6 @@ public static class IServiceCollectionExtensions
     {
         services.TryAddSingleton<IAreasService, AreasService>();
         services.TryAddSingleton<IDataLoaderService, DirectoryDataLoaderService>();
-        services.TryAddSingleton<IImageCompressionService, IImageCompressionService>();
         services.TryAddSingleton<ITileStitchService, TileStitchService>();
 
         services.TryAddSingleton<DdsTileLoaderService>();
