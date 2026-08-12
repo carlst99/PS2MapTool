@@ -17,6 +17,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using SixLabors.ImageSharp.Formats.Webp;
 
 namespace PS2MapTool.Cli.Commands;
 
@@ -26,7 +27,6 @@ public partial class StitchCommand : ICommand
 {
     private readonly Stopwatch _stopwatch = new();
     private readonly TileStitchService _imageStitchService;
-    private readonly OptiPngCompressionService _compressionService = new();
 
     private IDataLoaderService _dataLoader = null!;
     private IAnsiConsole _console = null!;
@@ -84,7 +84,7 @@ public partial class StitchCommand : ICommand
                 {
                     _console.MarkupLine($"Stitching tiles for { Formatter.World(world) } at { Formatter.Lod(lod) }...");
 
-                    string outputFilePath = Path.Combine(OutputPath, $"{world}_{lod}.png");
+                    string outputFilePath = Path.Combine(OutputPath, $"{world}_{lod}.webp");
                     IList<ITileDataSource> tiles = tileBucket.GetTiles(world, lod);
 
                     using (Image<Rgba32> map = await _imageStitchService.StitchAsync(tiles, ct))
@@ -98,7 +98,16 @@ public partial class StitchCommand : ICommand
 
                         // Save the stitched image.
                         _console.MarkupLine($"Saving { Formatter.World(world) } at { Formatter.Lod(lod) }...");
-                        await map.SaveAsPngAsync(outputFilePath, ct);
+                        await map.SaveAsWebpAsync
+                        (
+                            outputFilePath,
+                            new WebpEncoder
+                            {
+                                FileFormat = WebpFileFormatType.Lossless,
+                                Method = WebpEncodingMethod.Fastest
+                            },
+                            ct
+                        );
 
                         _console.MarkupLine($"{ Formatter.Success("Completed") } saving { Formatter.World(world) } at { Formatter.Lod(lod) } to { Formatter.Path(outputFilePath) }");
                     }

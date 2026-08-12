@@ -9,11 +9,9 @@ public class MaxParallelValidator : InputValidator<int>
     public override IEnumerable<InputValidationError> Validate(int value)
     {
         if (value < 1)
-            return [new InputValidationError("The minimum parallelism level is 1.")];
+            yield return Error("The minimum parallelism level is 1.");
 
         if (value > Environment.ProcessorCount)
-            return [new InputValidationError($"The maximum parallelism level is {Environment.ProcessorCount}.")];
-
-        return [];
+            yield return Error($"The maximum parallelism level is {Environment.ProcessorCount}.");
     }
 }
